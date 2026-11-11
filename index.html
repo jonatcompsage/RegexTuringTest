@@ -96,7 +96,7 @@ header.top .spacer { flex: 1; }
 .btn.primary:hover:not(:disabled) { color: var(--on-accent); filter: brightness(1.1); }
 .btn.icon { width: 34px; padding: 6px 0; text-align: center; }
 .btn[aria-pressed="true"], .float .btn[aria-pressed="true"], .seg button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-select.btn { padding-right: 8px; max-width: 250px; }
+select.btn { padding-right: 8px; max-width: 290px; }
 .preset { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--panel); }
 .seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 14px; font-weight: 500; cursor: pointer; }
@@ -255,19 +255,17 @@ table.delta tr.failrow th { color: var(--reject); }
 #view2d text { font-family: var(--mono); user-select: none; }
 #view2d .edge path { fill: none; }
 #view2d .edge { cursor: pointer; }
-#view2d .edge .line { stroke: var(--ec, var(--accent)); stroke-width: 1.8; }
+#view2d .edge path { fill: none; }
+#view2d .edge .line { stroke: var(--ec, var(--accent)); stroke-width: var(--w, 1.8px); transition: stroke-width .2s; }
 #view2d .edge polygon { fill: var(--ec, var(--accent)); }
 #view2d .edge text { font-size: 12.5px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
-#view2d .edge .hit { stroke: transparent; stroke-width: 14; }
-#view2d .edge .glow { stroke: var(--hl); stroke-width: 9; stroke-linecap: round; opacity: 0; transition: opacity .2s, stroke-width .2s; }
+#view2d .edge .hit { stroke: transparent; stroke-width: calc(var(--w, 1.8px) + 12px); }
+#view2d .edge .glow { stroke: var(--hl); stroke-width: calc(var(--w, 1.8px) + 8px); stroke-linecap: round; opacity: 0; transition: opacity .2s, stroke-width .2s; }
 #view2d .edge.trail .glow { opacity: .9; }
-#view2d .edge.fired .glow { opacity: 1; stroke-width: 13; }
-#view2d .edge.sel .glow { opacity: .4; stroke: var(--ec, var(--accent)); stroke-width: 12; }
-#view2d .edge.sel .line { stroke-width: 3.2; }
+#view2d .edge.fired .glow { opacity: 1; stroke-width: calc(var(--w, 1.8px) + 13px); }
+#view2d .edge.sel .glow { opacity: .4; stroke: var(--ec, var(--accent)); stroke-width: calc(var(--w, 1.8px) + 12px); }
 #view2d .edge.trail text, #view2d .edge.fired text, #view2d .edge.sel text { font-weight: 600; }
-#view2d .edge.dense .line { stroke-width: 1.1; } #view2d .edge.dense .glow { stroke-width: 5; } #view2d .edge.dense.fired .glow { stroke-width: 8; }
-#view2d .edge.dense text { font-size: 10.5px; stroke-width: 3px; } #view2d .edge.dense .hit { stroke-width: 6; }
-#view2d .edge.dense polygon { transform-box: fill-box; transform-origin: center; transform: scale(.7); }
+#view2d .edge.dense text { font-size: 10.5px; stroke-width: 3px; } #view2d .edge.dense .hit { stroke-width: 6px; } #view2d .edge.dense .glow { stroke-width: calc(var(--w, 1.5px) + 4px); }
 #view2d .state { cursor: pointer; }
 #view2d .state .body { fill: var(--panel); stroke: var(--ink); stroke-width: 1.8; transition: fill .3s, r .3s; }
 #view2d .state .ring { fill: none; stroke: var(--accept); stroke-width: 1.8; }
@@ -329,6 +327,7 @@ table.delta tr.failrow th { color: var(--reject); }
       <button role="menuitem" data-export="morphett" aria-label="Download morphett 5-tuples">morphett 5-tuples</button>
     </div>
   </div>
+  <button id="promptBtn" class="btn" aria-haspopup="dialog" aria-label="Show the prompt used to build this application">Prompt</button>
   <button id="themeBtn" class="btn icon" aria-label="Switch between light and dark mode" title="Light / dark">◐</button>
   <button id="helpBtn" class="btn icon" aria-label="Help: shortcuts and grammar" title="Help">?</button>
 </header>
@@ -425,10 +424,10 @@ table.delta tr.failrow th { color: var(--reject); }
     </section>
   </aside>
 
-  <section id="stage" class="v-3d" aria-label="Machine view">
+  <section id="stage" class="v-2d" aria-label="Machine view">
     <div id="viewport">
-      <div id="view3d" aria-label="3D view of the machine. Drag to orbit, wheel to zoom, shift-drag to pan."></div>
-      <svg id="view2d" role="img" aria-label="2D state diagram" style="display:none"></svg>
+      <div id="view3d" aria-label="3D view of the machine. Drag to orbit, wheel to zoom, shift-drag to pan." style="display:none"></div>
+      <svg id="view2d" role="img" aria-label="2D state diagram"></svg>
       <div id="placeholder" hidden>Fix the pattern to build the machine</div>
       <div id="tooltip" role="tooltip"></div>
       <div class="float bl" id="stats"></div>
@@ -437,8 +436,8 @@ table.delta tr.failrow th { color: var(--reject); }
     <div id="tapeBar" aria-label="Tape"><div id="tapeTrack"></div></div>
     <div class="float tl">
       <div class="seg" role="radiogroup" aria-label="View mode">
-        <button role="radio" data-view="3d" aria-checked="true" aria-label="3D view">3D</button>
-        <button role="radio" data-view="2d" aria-checked="false" aria-label="2D diagram view">2D</button>
+        <button role="radio" data-view="2d" aria-checked="true" aria-label="2D diagram view">2D</button>
+        <button role="radio" data-view="3d" aria-checked="false" aria-label="3D view">3D</button>
         <button role="radio" data-view="table" aria-checked="false" aria-label="Transition table view">Table</button>
       </div>
       <label class="chk" id="pinLabel"><input type="checkbox" id="pinTable" aria-label="Pin the table under the diagram"> Pin table</label>
@@ -470,7 +469,7 @@ table.delta tr.failrow th { color: var(--reject); }
           <tr><td><kbd>R</kbd></td><td>Reset</td></tr>
           <tr><td><kbd>?</kbd> <kbd>Esc</kbd></td><td>Open / close this help</td></tr>
         </table>
-        <p class="muted">3D: drag to orbit, wheel or pinch to zoom, right-drag, shift-drag or two fingers to pan. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol edges redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
+        <p class="muted">3D: drag to orbit, wheel or pinch to zoom, right-drag, shift-drag or two fingers to pan. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol edges redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
         <h2>The machine</h2>
         <p>Your pattern is compiled to the minimal DFA and shown as a Turing machine. Other simulators leave three choices open; this one fixes them:</p>
         <ul>
@@ -500,6 +499,7 @@ anchor      = "^" at the start, "$" at the end (no-ops)</pre>
     </div>
     <h2>Notes</h2>
     <ul class="muted">
+      <li>Presets 1–20 are the Regex Explorer exercises rewritten as whole-string patterns: no <span class="mono">\b</span>, and a line-search exercise becomes “the whole line matches”. Exercise 20 only recognizes the “Last, First” shape; replacement is outside what a recognizer does.</li>
       <li>The alphabet is printable ASCII plus tab and newline, so that <span class="mono">\t</span>, <span class="mono">\n</span> and <span class="mono">\s</span> are meaningful.</li>
       <li>The classic pattern <span class="mono">(b*ab*ab*)*</span> does not accept “b” (each pass needs two a’s), so its minimal DFA has 4 states, not 2. The “Even number of a’s” preset therefore uses <span class="mono">b*(ab*ab*)*</span>, which is the 2-state machine. Its rejecting example is “abaa” (three a’s), because “aba” has two a’s and is accepted.</li>
       <li>Edges into the sink are not drawn (they would hide the machine); they are listed in tooltips and in the Table view, and the edge taken is drawn in red when a run fails.</li>
@@ -509,7 +509,368 @@ anchor      = "^" at the start, "$" at the end (no-ops)</pre>
     <pre id="testOut" aria-live="polite"></pre>
   </div>
 </div>
+<div id="promptModal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="promptTitle">
+  <div class="sheet">
+    <div class="row between"><h3 id="promptTitle">The prompt that built this application</h3>
+      <span class="row"><button id="promptCopy" class="btn primary" aria-label="Copy the whole prompt to the clipboard">Copy to clipboard</button><button id="promptClose" class="btn" aria-label="Close the prompt">Close</button></span></div>
+    <p class="muted">The full package: the original build prompt, the follow-up requests in order, and the corrections made along the way. Tables are written with “|” between columns.</p>
+    <pre id="promptBody" tabindex="0" style="max-height:66vh;white-space:pre-wrap;word-break:break-word"></pre>
+  </div>
+</div>
 <div id="live" class="sr" aria-live="assertive"></div>
+<script type="text/plain" id="promptText">
+Build Prompt: 3D Turing Machine Regex Simulator
+Nov 11, 2026 · @Compsage
+
+Role and goal
+You are a senior front-end engineer building a teaching tool for a 300-level programming languages course. Build a single-file, browser-only, interactive 3D simulator that takes any regular expression, checks it against a formal regex grammar, compiles it into a finite-state machine framed as a Turing machine, renders that machine in three dimensions, and then animates a test string moving through it, state by state, either stepped by hand or played automatically. The user must be able to orbit, zoom and pan the 3D machine from any angle while the simulation runs.
+The canonical demo: the user enters the Social Security number pattern \d{3}-\d{2}-\d{4}, the machine appears, the user types 219-09-9999, presses Play, and watches the head consume one character at a time while the active state lights up, ending in an accepting state. Typing 219-09-999 or 219-09-99999 must end in rejection, visibly.
+This tool is a companion to the Regex Explorer already built for the course (a two-panel page with a goal, an editable pattern, a token-by-token breakdown, and highlighted matches). Match its look and vocabulary where the sections below say so.
+
+Reference simulators and what to take from each
+Three existing simulators show the conventions students already know. All three make the user hand-write a transition table; this build is different in one fundamental way: the regular expression is the only way to define a machine. There is no transition-table editor. The table is generated from the regex, shown read-only, and exportable in the legacy formats so students can open the same machine in the older tools.
+
+Simulator | How a machine is defined | What to borrow | What not to copy
+turingmachine.io | YAML document: start state, blank symbol, transition table; each instruction writes a symbol, moves L or R, sets a state | Animated 2D state diagram with the tape underneath; current state and cell highlighted; Step / Run / Reset buttons; a dozen examples; the shorthand that halting in a non-accept state means reject | The YAML editor and the “Load machine” sync step; instead, the machine rebuilds live from the regex
+turingmachine.vassar.edu | Program listing of transitions typed by the user, classic classroom simulator | Clear separation of program, tape and current-state readouts; the step counter; a plain table view of every transition | Any free-form program entry
+morphett.info/turing | One 5-tuple per line: <state> <read> <write> <L/R/*> <next>; * wildcards; halt-accept convention; breakpoints with ! | Undo Step; Run at full speed; breakpoints; the tuple syntax as an export format; the halt-accept naming | The program text area, wildcards and non-deterministic mode
+
+Required because of these references
+• A read-only Generated transition table tab in the left panel listing every tuple of the compiled machine in morphett’s format, with the input classes expanded or collapsed (q0 0-9 0-9 r q1), plus a note that write always equals read because this machine never writes.
+• An Export menu with two options: turingmachine.io YAML and morphett 5-tuples, each downloaded as a text file that loads unchanged in that tool and produces the same accept/reject results. Include the test string as the input: line in the YAML export.
+• A step counter and Undo Step, named exactly that, so the controls match what students have used before.
+• Breakpoints: clicking a state in the 3D scene toggles a breakpoint; Play pauses when the machine enters that state, matching morphett’s !.
+• The in-app help must state the three variations this build fixes that the legacy tools leave open: the tape is right-infinite, the head only moves right, and halting is accept-or-reject only.
+
+Hard constraints
+• One file. Deliver exactly one .html file containing all HTML, CSS and JavaScript. No build step, no bundler, no server. It must open from disk with a double-click and also work when hosted.
+• 3D library. Use Three.js, loaded as a single UMD <script> tag from cdnjs or jsDelivr, pinned to an exact version at least two weeks old (for example three@0.160.0). Do not use ES-module imports, import maps, or OrbitControls from the examples folder (it is not in the UMD bundle); implement a small orbit/zoom/pan camera controller by hand (mouse drag to orbit, wheel to zoom, right-drag or shift-drag to pan, touch equivalents).
+• No other network dependencies except Google Fonts (with a real fallback stack). Everything else inline.
+• Pure JavaScript regex engine. Do not use the browser’s RegExp to decide matches. Write your own parser, compiler and simulator so that the automaton you draw is the automaton you run. The browser’s RegExp may be used only in the acceptance tests to cross-check results.
+• Performance. Patterns up to roughly 60 characters and strings up to 200 characters must compile and animate smoothly (60 fps on a laptop). Cap the rendered machine at 150 states; above that, show a message instead of rendering.
+• Works in current Chrome, Firefox, Safari and Edge, on desktop and tablet. Phone layout may stack panels but every feature must remain usable.
+• Light and dark mode via prefers-color-scheme, with a manual toggle, using CSS variables for every color including the 3D scene background.
+
+Regex input and grammar checker
+The pattern box accepts any text, but nothing is compiled or rendered until the text passes a formal grammar check. Implement a hand-written recursive-descent parser for the grammar below and surface every error with a position and a plain-English message. Stay strictly inside regular languages: anything that needs a stack or memory is rejected as a grammar error, not silently ignored.
+
+Supported grammar (EBNF)
+regex       = alternation ;
+alternation = concat { "|" concat } ;
+concat      = { quantified } ;
+quantified  = atom [ quantifier ] ;
+quantifier  = "*" | "+" | "?" | "{" digits [ "," [ digits ] ] "}" , [ "?" ] ;
+atom        = literal | "." | escape | class | group | anchor ;
+group       = "(" [ "?:" ] alternation ")" ;
+class       = "[" [ "^" ] { class_item } "]" ;
+class_item  = class_atom [ "-" class_atom ] ;
+class_atom  = literal_in_class | escape ;
+escape      = "\\" ( "d" | "D" | "w" | "W" | "s" | "S" | "t" | "n" | metachar ) ;
+anchor      = "^" | "$" ;
+metachar    = "." | "*" | "+" | "?" | "(" | ")" | "[" | "]" | "{" | "}" | "|" | "\\" | "^" | "$" | "-" | "/" ;
+
+Semantics: matching is whole-string (the pattern is implicitly anchored at both ends), so ^ and $ are accepted and treated as no-ops at the ends and as errors anywhere else. Capturing and non-capturing groups behave identically (there is no capture output). . matches any character except newline. Lazy quantifier suffixes (*?, +?) are accepted and treated as greedy, since laziness does not change the language. The alphabet is the set of printable ASCII characters plus space; \d, \w, \s expand to the usual ASCII sets.
+
+Formal foundation: the checker must enforce the textbook definition
+The grammar above is programming syntax, but the checker’s authority is the inductive definition of a regular expression over an alphabet Σ (as in GeeksforGeeks, Regular Expressions, Regular Grammar and Regular Languages): ε is a regular expression; every symbol a ∈ Σ is one; and if r and s are regular expressions then so are the union r + s, the concatenation rs, and the Kleene star r*. Nothing else is. Every construct the parser accepts must desugar to those five rules, and the parser must refuse anything that cannot:
+
+Programming syntax | Desugars to | Rule used
+r? | (r + ε) | union, ε
+r+ | rr* | concatenation, star
+r{n} | r r … r (n copies) | concatenation
+r{n,m} | r{n}(r + ε){m−n} | concatenation, union
+r{n,} | r{n}r* | concatenation, star
+[abc], [a-c] | (a + b + c) | union of symbols
+[^abc] | union of every symbol in Σ except a, b, c | union of symbols
+\d, \w, \s, . | union of the symbols in that class | union of symbols
+(r), (?:r) | r | grouping only
+\1, lookarounds, \b | no desugaring exists | rejected
+
+Two notations are accepted, chosen by a Notation toggle above the pattern box:
+• Programming (default): the EBNF above, with | for union and \d-style classes.
+• Textbook: + for union (so a+ is not “one or more” here), juxtaposition for concatenation, * for star, ε (or eps) for the empty string, ∅ (or null) for the empty language, parentheses for grouping, and bare symbols from the alphabet. Example: (0+1)*0(0+1)*0(0+1)*. In textbook notation the alphabet Σ is declared explicitly in a small box (default {0,1}), and any symbol outside Σ is a grammar error.
+
+Required views under a valid pattern, each in its own collapsible panel in the left column:
+1. Desugared expression: the pattern rewritten using only the five rules in textbook notation, with classes expanded (truncate unions of more than 12 symbols as (0+1+…+9)).
+2. Right-linear grammar: generated from the minimized DFA, one non-terminal per state, productions of the form A → aB and A → ε for accepting states, start symbol = start state. This is the same machine written as a grammar, which the course treats as the third equivalent description.
+3. Formal 5-tuple: Q, Σ, δ (as the transition table), q₀, F, printed in the notation of the course, so the 3D picture, the table and the tuple always agree.
+
+Equivalence checker. A second, optional pattern box labelled “Compare with”. When both patterns are valid, minimize both DFAs and test them for isomorphism (or run the product construction and check that the symmetric difference is empty). Show “Equivalent” or “Not equivalent, distinguishing string: …” with the shortest string accepted by one and not the other, found by breadth-first search over the product automaton. This implements the decision problem the theory promises for regular languages and lets students check textbook claims such as (a+b*)* ≡ (a+b)* and 0*(10*)* ≡ (0+1)*.
+
+Rejected on purpose, with a specific message
+
+Input | Message shown
+\1, \2 … | Backreferences are not regular: a finite machine cannot remember earlier text.
+(?=, (?!, (?<=, (?<! | Lookarounds are not supported in this simulator.
+(?<name> | Named groups are not supported; use a plain group.
+\b, \B | Word boundaries are not supported here (they need context the machine does not keep).
+{5,3} | Quantifier minimum 5 is larger than maximum 3.
+{1000} or a repeat that would create more than 150 states | Repeat count too large to render.
+(abc, abc), [abc, a{2 | Unclosed or unexpected (, ), [, { at position N.
+*abc, a**, (|) | (message not given)
+[z-a] | Character range out of order at position N.
+trailing \ | Pattern ends in the middle of an escape.
+
+Error presentation
+• Show errors inline under the pattern box in red, in the format position 7: unclosed “(”, and underline the offending character in the pattern box (use a mirror layer behind the input, as the Explorer does for token highlighting).
+• While the pattern has an error, the 3D panel shows a dimmed placeholder reading “Fix the pattern to build the machine” and the test-string controls are disabled.
+• The check runs on every keystroke with a 150 ms debounce. A valid pattern rebuilds the machine immediately; the camera position is preserved if the user has moved it.
+• Under a valid pattern, show the same token-by-token breakdown as the Regex Explorer (one row per piece: \d{3} → “a digit 0–9, exactly 3 times”), and clicking a row highlights that piece in the pattern box.
+
+Grammar coverage: every production and every combination must work
+The parser, compiler, all three views and the self-tests must handle every production in the EBNF above, in every position it can appear, and in combination with every other production. The build is not complete until the matrix below passes, and the self-tests must print a coverage line naming any production that no test exercised.
+
+Single-construct cases (one row per production; each must parse, compile, render and simulate)
+
+Production | Pattern | Accepts | Rejects
+literal | abc | abc | ab, abcd, ABC
+escaped metachar | a\.b\*c\(\) | a.b*c() | axb*c()
+. | a.c | abc, a.c, a c | ac, abbc, a\nc
+\d \D | \d\D | 7x, 0- | 77, x7
+\w \W | \w\W | a!, _  | ab, !a
+\s \S | \s\S |  a, \tx |   , aa
+\t \n | a\tb | a<TAB>b | a b
+class | [abc] | a, b, c | d, ab
+class range | [a-f0-9] | a, f, 5 | g, A
+negated class | [^0-9] | a, -,   | 5
+class with escapes | [\d\-x] | 3, -, x | y
+class with literal ] first | []a] | ], a | b
+group | (ab) | ab | a, b
+non-capturing group | (?:ab) | ab | a
+alternation | a|b|c | a, b, c | ab, d
+* | a* | ε, a, aaaa | b, ab
++ | a+ | a, aaa | ε, b
+? | ab?c | ac, abc | abbc
+{n} | a{3} | aaa | aa, aaaa
+{n,} | a{2,} | aa, aaaaa | a
+{n,m} | a{1,3} | a, aa, aaa | ε, aaaa
+{0,m} | a{0,2} | ε, a, aa | aaa
+{0} | ab{0}c | ac | abc
+lazy suffixes | a*?b+?c?? | b, aabbc | ε, cc
+anchors at ends | ^abc$ | abc | xabc
+
+Pairwise combinations (every production applied to or beside every other; the rows below are the required minimum, and the self-tests must generate the full pairwise set programmatically from a construct list and cross-check each against the browser’s RegExp)
+
+Combination | Pattern | Accepts | Rejects
+quantifier on group | (ab)+ | ab, abab | aba
+quantifier on class | [0-9]{2,4} | 12, 1234 | 1, 12345
+quantifier on . | a.*b | ab, axyzb | a, ba
+quantifier on escape | \d+\.\d+ | 3.14, 10.0 | 3., .5
+nested groups | ((a|b)c)* | ε, ac, acbc | a, abc
+nested quantifiers | (a*)*, (a+)+, (a?)* | ε, aaa | b (and must compile without blow-up: the minimized DFA for each has 1 live state)
+quantifier on quantified group | (a{2}){2} | aaaa | aaa, aaaaa
+alternation inside group inside concat | x(a|bc)y | xay, xbcy | xy, xaby
+alternation of different lengths | a|bb|ccc | a, bb, ccc | aa, cc
+alternation with ε-alternative via ? | (a|b?)c | c, ac, bc | abc
+class inside group with star | ([a-c]x)* | ε, axbx | ax b
+negated class with quantifier | "[^"]*" | "", "hi" | "a"b"
+alternation at top level with quantifiers | a+|b* | ε, a, bbb | ab
+group then alternation precedence | ab|cd vs a(b|c)d | ab, cd vs abd, acd | abd vs ab
+range meeting quantifier bounds | [a-z]{1,2}[0-9]{0,1} | a, ab1 | abc, a12
+escaped quantifier chars literal | a\{2\} | a{2} | aa
+dot inside class is literal | [.]+ | .. | a
+hyphen at class edge is literal | [-a], [a-] | -, a | b
+full presets | all eight presets | their listed accepts | their listed rejects
+
+Coverage rules
+• Every row above is a self-test; a row that fails names the production and the string.
+• The self-tests also fuzz: for each of the 25 single constructs, pair it with every other one by concatenation, by alternation, and by nesting it in a quantified group, generate 50 random strings over the union of their alphabets, and assert run(machine, s).accepted === new RegExp("^(?:" + p + ")$").test(s). Any mismatch is a failing test with the pattern and string printed.
+• The token breakdown must have a plain-English line for every production, including {n,m} variants, lazy suffixes and the empty-match cases (a{0}, a* on ε).
+• Precedence is fixed as in the EBNF: quantifiers bind tightest, then concatenation, then alternation; the parser must not accept a pattern in a way that changes its language relative to RegExp for the supported subset.
+• Edge cases that must behave: a pattern that is only ε (empty box is an error, but () or a{0} is the empty-string language and renders a single accepting start state); \| at the start, end or doubled is an error (“empty alternative”); { not followed by a valid repeat is a literal { only if the course decides so; the default here is an error, matching the table in the grammar section.
+
+Compilation pipeline
+Compile in four stages and keep each stage’s output available for debugging in the browser console.
+1. Parse the pattern into an abstract syntax tree using the grammar above. Each node records its source span so errors and token highlighting can point back into the pattern.
+2. Thompson construction: convert the tree into an NFA with ε-transitions. Expand bounded repeats ({n,m}) by copying the sub-automaton, which is where the 150-state cap applies.
+3. Subset construction: convert the NFA into a DFA, then minimize it (Hopcroft or the simple partition-refinement algorithm). The DFA is what gets rendered and simulated, so every input character produces exactly one move and the animation is unambiguous. Add an explicit reject sink state so that every state has a transition for every input class; draw the sink dimmed and off to the side.
+4. Frame it as a Turing machine. Present the DFA as a one-tape, read-only, right-moving Turing machine, because that is the mental model the course uses:
+    ◦ Tape: the input string, one cell per character, followed by a blank symbol ⊔.
+    ◦ Head: starts on the leftmost cell, reads the symbol, follows the transition, writes nothing, moves right.
+    ◦ Reading ⊔ in an accepting state halts with Accept; reading ⊔ elsewhere, or reaching the sink, halts with Reject.
+    ◦ Label transitions with compact input classes rather than individual characters: 0–9, a–z, -, any, other. Compute classes by partitioning the alphabet by the set of states each character leads to, so \d shows as one edge, not ten.
+Expose a small, documented internal API so the pieces can be tested in isolation: parse(pattern) → ast | ParseError, toNFA(ast), toDFA(nfa), minimize(dfa), step(machine, state, symbol) → nextState, and run(machine, input) → { accepted, trace: [{state, symbol, next, position}] }.
+
+3D visualization
+The machine is a graph of states in 3D space with the tape running along the front, so the user can see both the state diagram and the head position from any angle.
+
+States
+• Each state is a sphere about 0.5 units across with a floating label (q0, q1, …) rendered as a sprite that always faces the camera.
+• Start state: a ring or arrow marker. Accepting states: a second, slightly larger translucent sphere around them (the classic double circle, in 3D). Sink state: small, grey, placed below the main layout.
+• The active state glows in the highlight color and scales up by about 20 percent; the previous state fades back over 300 ms.
+
+Transitions
+• Each transition is a tube (TubeGeometry along a quadratic Bezier curve) with an arrowhead cone at the target end. Self-loops are drawn as a small circle above the state. Parallel edges in opposite directions bow away from each other so both labels stay readable.
+• Each edge carries a sprite label with its input class (0–9, -, other).
+• When a step fires, the edge taken pulses in the highlight color and a small particle travels along it from source to target over the step duration.
+
+Layout
+• Compute positions automatically from the DFA: rank states by shortest path from the start (breadth-first), place each rank on its own z-plane moving away from the camera, spread states within a rank along x, and offset y to reduce edge crossings. Then run 100 iterations of a light force-directed relaxation within those constraints so the graph looks organic but still reads left-to-right / front-to-back. The result must be deterministic for a given pattern.
+• Sizes scale with state count so a 6-state SSN machine and a 60-state email machine both fit the default view.
+
+Tape and head
+• Draw the tape as a row of flat cells in front of and below the graph, one cell per character of the test string plus the blank, with the character rendered on the cell face. The head is a small wedge above the current cell that slides right one cell per step.
+• The current cell is highlighted; consumed cells dim slightly.
+
+Camera and scene
+• Perspective camera, orbit around the graph’s centroid, zoom limits so the user cannot clip inside a sphere or lose the machine. Buttons for preset views: Front, Top, Side, Isometric, and Reset. Camera moves are tweened over 400 ms.
+• Soft ambient plus one directional light, a faint grid plane under the machine, subtle fog so depth is readable. No post-processing.
+• Hovering a state or edge shows a tooltip with its id and, for a state, the set of input classes it accepts; clicking a state pins the tooltip.
+• Resize with the window; use devicePixelRatio capped at 2.
+
+View modes: 3D, 2D and table, all driven by the same simulation
+A three-way View switch sits in the stage’s top-left corner: 3D · 2D · Table. All three show the same machine and the same simulation state; switching views mid-run keeps the current step, so a student can step twice in 3D, switch to the table, and see the same row highlighted.
+• 3D is the Three.js scene described above.
+• 2D is a flat state diagram drawn with inline SVG in the style students know from turingmachine.io: circles for states, double circles for accepting states, a short arrow into the start state, curved labelled edges, the tape as a row of squares underneath. Use the same automatic layout as 3D projected onto the x–y plane, left to right from the start state. The active state, fired edge and current cell use the same highlight color and the same timings as 3D, so the two views animate in lockstep. Pan with drag and zoom with the wheel.
+• Table is the transition table δ rendered as a grid: one row per state, one column per input class, each cell naming the next state; a ⊔ column shows the halting verdict for each state (Accept or Reject). The current state’s row and the column for the symbol under the head are highlighted, and the cell at their intersection pulses when the step fires, so the table itself animates. Accepting states are marked with a double-circle glyph in the row header and the start state with an arrow, matching the diagrams.
+Play, Step, Undo Step, speed, breakpoints and the trace work identically in all three views. The Table view may be shown alongside 2D or 3D with a “Pin table” checkbox, which docks it under the stage at half height, so a lecture can show the diagram and the table moving together.
+
+String testing and simulation
+The test string is matched exactly and in full: the whole string must be consumed and the machine must halt in an accepting state. 219-09-9999 accepts; x219-09-9999 and 219-09-9999x reject. This is the course’s definition of a machine accepting a string, and it differs from a search tool like grep, so say so in a one-line note under the string box.
+
+Controls (all keyboard-reachable, with shortcuts)
+• Load (Enter): writes the string onto the tape, resets the head to cell 0 and the machine to the start state, clears any previous verdict.
+• Step (→): consume one character: highlight the current cell, pulse the edge taken, move the active-state glow, slide the head right, append a row to the trace.
+• Step back (←): undo one step by replaying the trace to the previous position (the trace is the source of truth, so this is cheap and exact).
+• Play / Pause (space): auto-step at the chosen speed.
+• Speed: slider from 0.25× to 4×, where 1× is one step per 700 ms. The animation of each step always completes before the next begins, even at 4×.
+• Reset (R): return to the loaded string at cell 0.
+
+Verdict
+• When the head reaches the blank: a large ACCEPT badge in green or REJECT in red next to the tape, the final state flashes three times, and the trace shows the halting step.
+• Early rejection: if the machine enters the sink before the end of the input, stop there and show REJECT with the message “no transition from q4 on ‘x’ at position 7”, and leave the unread cells visibly unread.
+• Empty string: pressing Load with an empty box runs the zero-step case and reports whether the start state is accepting.
+
+Trace panel
+• A table that grows one row per step: #, state, read, edge, next. The current row is highlighted and scrolls into view. Clicking a row jumps the simulation to that step.
+• A Copy trace button copies the rows as tab-separated text for students to paste into homework.
+
+Batch check
+• Below the single-string box, a textarea for one string per line and a Run all button. Each line gets a green or red marker without animation, so a student can check twenty cases at once and then animate the one that surprised them by clicking it.
+
+Failure modes must be unmistakable
+Every way a run can fail has its own name, message, picture and trace row, so a student never has to guess why a string was rejected.
+
+Failure | When | What the user sees
+No transition | the current state has no edge for the symbol under the head (the machine would enter the sink) | The head stops on the offending cell, that cell turns red, the current state turns red, a red dashed edge is drawn from it to the sink which lights up, and the badge reads REJECT · no transition from q4 on ‘x’ at position 7. Unread cells to the right stay dim to show the input was never consumed.
+Ran out of input | the head reaches ⊔ while in a non-accepting state | The blank cell turns red, the current state turns red with a hollow (single) ring to emphasize it is not accepting, and the badge reads REJECT · input ended in q10, which is not accepting; needed 1 more character matching 0–9 (the “needed” hint lists the input classes with edges out of that state).
+Empty input, start not accepting | Load pressed with an empty string | Badge reads REJECT · empty string; q0 is not an accepting state.
+Symbol outside Σ (textbook notation only) | a character in the test string is not in the declared alphabet | Rejected before the run starts: the string box underlines the character and the badge reads Not run · ‘2’ is not in Σ = {0,1}.
+
+Accept has one form: the blank is read in an accepting state, the state flashes green three times, and the badge reads ACCEPT · 11 steps.
+Rules that apply to all failures:
+• The verdict badge is large, colored, and placed beside the tape in every view; the same text is announced to screen readers.
+• The trace’s last row is tinted red and repeats the reason, so it survives in a copied trace.
+• In the Table view the cell that caused the failure (the empty or sink cell) is outlined in red.
+• A Why? link next to a reject badge opens a sentence tying the failure to the pattern, generated from the desugared expression: “The pattern requires exactly 4 digits after the second dash; the input had 3.” If no specific sentence can be generated, fall back to naming the state and the missing input class.
+• Failure state persists until Reset, Load or a pattern change, so the user can orbit the 3D view and inspect it.
+
+Screen layout and controls
+Three regions on desktop, stacked on narrow screens.
+
+Region | Position | Contents
+Header | top, full width | Title “Turing Machine Regex Simulator”, a preset dropdown (same style as the Explorer’s exercise dropdown), light/dark toggle
+Left panel | ~30% width, scrolls | Pattern box with / / slashes, grammar error line, token breakdown, test-string box, Load/Step/Back/Play/Reset/Speed controls, verdict badge, trace table, batch-check textarea
+3D stage | remaining ~70%, fills height | The machine, tape and head in the chosen view (3D / 2D / Table switch in the top-left, with an optional pinned table under the stage); camera preset buttons and a Highlight toggle (hide the glow and labels for a clean screenshot) floating in the stage’s top-right corner; state count and “minimized DFA” note in the bottom-left
+
+• The 3D stage never scrolls the page: wheel events over the canvas zoom the camera, and the canvas has touch-action: none.
+• Every control has a visible focus ring and an aria-label. The verdict is also announced through an aria-live region.
+• A small ? button opens an overlay with the keyboard shortcuts, the supported grammar in one screen, and a sentence on why backreferences are rejected.
+
+Visual design (match the Regex Explorer)
+Reuse the Explorer’s tokens so the two tools feel like one product.
+
+Token | Light | Dark | Used for
+background | #EEF1F5 | #141A22 | page and 3D scene background
+panel | #FFFFFF | #1C242E | left panel, tooltips
+ink | #1B2430 | #E8EDF3 | text, default state spheres
+accent | #1F5FA8 | #7FB0F0 | buttons, start-state marker, edge tubes
+match / highlight | #FFE066 | #D9B81F | active state glow, fired edge, current tape cell
+accept | #1E7F4E | #5CCB8E | accepting rings, ACCEPT badge
+reject | #B3261E | #FF8A80 | sink state, REJECT badge, grammar errors
+
+• Typefaces: IBM Plex Sans for UI text, IBM Plex Mono for the pattern, tape characters, state labels and the trace table, loaded from Google Fonts with ui-monospace / system-ui fallbacks.
+• Typographic punctuation in all UI copy (’ and “ ”), straight quotes only inside code.
+• Minimum 14 px UI text; the pattern box at 18 px mono, as in the Explorer.
+• Motion is short and purposeful (300–400 ms tweens); honor prefers-reduced-motion by snapping instead of tweening.
+
+Presets and the worked example
+The preset dropdown loads a pattern plus a matching and a non-matching string, mirroring the Explorer’s exercises. Ship these presets:
+
+Preset | Pattern | Accepts | Rejects
+Social Security number | \d{3}-\d{2}-\d{4} | 219-09-9999 | 219-09-999
+US phone number | (\+1[ -]?)?\(?\d{3}\)?[ .-]?\d{3}[ .-]?\d{4} | (410) 555-0199 | 410-555-019
+Email address | [\w.+-]+@[\w-]+(\.[\w-]+)+ | dana.whitfield@morgan.edu | support@localhost
+Hex color | #([0-9a-fA-F]{6}|[0-9a-fA-F]{3}) | #1F5FA8 | #1234
+IPv4 address | (\d{1,3}\.){3}\d{1,3} | 10.0.0.5 | 6.8.0.1.5
+Semantic version | v?\d+\.\d+\.\d+(-[\w.]+)? | v2.4.0 | 1.82
+Log file name | [\w.-]+\.log(\.\d+)? | app.log.2 | catalog.pdf
+Even number of a’s | (b*ab*ab*)* | abab | aba
+
+The last preset is the classic automata-theory example and should produce a small two-state machine that students can trace by hand to confirm the simulator agrees.
+
+Worked example the build must reproduce exactly. With the SSN preset, the minimized DFA has 12 states plus the sink: q0 →(0–9)→ q1 →(0–9)→ q2 →(0–9)→ q3 →(-)→ q4 →(0–9)→ q5 →(0–9)→ q6 →(-)→ q7 →(0–9)→ q8 →(0–9)→ q9 →(0–9)→ q10 →(0–9)→ q11, with q11 accepting, and every other input class from every state going to the sink. Loading 219-09-9999 and pressing Play shows 11 steps, each lighting the next state in the chain, then the blank is read in q11 and ACCEPT appears. Loading 219-09-999 reads the blank in q10 and shows REJECT. Loading 219-09-99999 steps into the sink on the fifth 9 and shows REJECT with “no transition from q11 on ‘9’ at position 11”.
+
+Acceptance tests
+Include a hidden Run self-tests button (in the ? overlay) that executes these in the browser and prints pass/fail to the console and the overlay. The build is not done until all pass.
+[ ] Grammar: every row of the “rejected on purpose” table produces the stated message at the right position; every preset pattern parses.
+[ ] Correctness: for each preset and for 200 random strings over its alphabet, run(machine, s).accepted equals new RegExp("^(?:" + pattern + ")$").test(s).
+[ ] Minimization: the SSN machine has exactly 12 live states plus one sink; (b*ab*ab*)* has exactly 2 live states.
+[ ] Exact match: 219-09-9999 accepts; x219-09-9999, 219-09-9999x and the empty string reject on the SSN preset.
+[ ] Trace: stepping forward 11 times then back 11 times on 219-09-9999 returns to q0 at cell 0 with an empty trace.
+[ ] Early rejection: 219-09-99999 halts at position 11 with the specified message and leaves one cell unread.
+[ ] Rendering: a valid pattern produces a scene whose state-sphere count equals the DFA state count; an invalid pattern produces no scene objects; a pattern needing more than 150 states shows the cap message and no scene.
+[ ] Camera: after orbiting, editing the pattern to another valid pattern keeps the camera position; Reset returns to the default view.
+[ ] Batch check: twenty lines run in under 100 ms with no animation and the correct markers.
+[ ] File: the deliverable is one .html file under 400 KB that works from file:// with no console errors, in light and dark mode, in Chrome, Firefox and Safari.
+[ ] Export: the morphett 5-tuple export of the SSN machine, pasted into morphett.info with input 219-09-9999, halts in halt-accept; the turingmachine.io YAML export loads there without a syntax error and accepts the same input.
+[ ] Breakpoint: with a breakpoint on q7, Play on 219-09-9999 pauses after step 7 with the head on cell 7.
+[ ] Desugaring: \d{2,3} desugars to (0+1+…+9)(0+1+…+9)((0+1+…+9)+ε); a? to (a+ε); a+ to aa*, and the desugared expression compiles to a DFA isomorphic to the original.
+[ ] Textbook notation: with Σ = {0,1}, (0+1)*0(0+1)*0(0+1)* accepts 10101 and 00000, rejects 1, 101 and 0; a pattern containing 2 is a grammar error naming the alphabet.
+[ ] Equivalence: (a+b*)* ≡ (a+b)* and 0*(10*)* ≡ (0+1)* report Equivalent; ab* vs (ab)* reports Not equivalent with distinguishing string ε or abb; (b*ab*ab*)* vs (b+ab*a)* reports Equivalent.
+[ ] Right-linear grammar: for ab* the generated grammar is S → aA, A → bA | ε up to renaming, and the grammar panel’s productions match the transition table row for row.
+[ ] Views: stepping twice in 3D, switching to 2D, then to Table shows q2 active, the head on cell 2 and the same trace in all three; Play started in Table view animates the row/column highlight at the chosen speed.
+[ ] Failure modes: on the SSN preset, 219-09-99999 produces the “no transition” picture with the sink lit and position 11 named; 219-09-999 produces the “ran out of input” picture naming q10 and “needed 1 more character matching 0–9”; the empty string produces the empty-input message; each reject’s last trace row is red and carries the reason.
+[ ] Grammar coverage: every row of the single-construct and pairwise tables passes; the programmatic pairwise fuzz (25 constructs × 24 partners × 3 combinators × 50 strings) reports zero mismatches against RegExp; the coverage line lists no unexercised production.
+
+Non-goals and delivery
+Not in scope: a transition-table editor of any kind, capture-group output, search (non-anchored) matching, Unicode categories, backreferences, lookarounds, multi-tape or writing Turing machines, saving to a server, user accounts.
+Deliver:
+1. The single .html file.
+2. A short README section at the top of the file as an HTML comment: how the pipeline works, the grammar, and the keyboard shortcuts.
+3. A list of any deliberate deviations from this prompt with the reason for each.
+Build in this order and keep each stage working before moving on: parser and error reporting → NFA/DFA/minimization with the console API and self-tests → 2D-less logic of the simulator (trace, verdicts, batch check) → 3D scene and layout → animation and camera presets → polish, accessibility, dark mode. If something in this prompt is ambiguous, prefer the choice that makes the SSN worked example match exactly.
+
+
+==========================================================================
+FOLLOW-UP REQUESTS (given in conversation after the first build, in order)
+==========================================================================
+
+1. Light up the path the string follows. Blow up the symbols to the individual level: \d would be decimal, but needs multiple paths, one for each digit and letter if possible. Put a toggle in so the graph can be more dense.
+
+2. Make it clear which symbols / sections of the regex string are associated with each transition. Maybe if you click the line we can see them as well.
+
+3. Host it on GitHub (GitHub Pages).
+
+4. Make the 2D view the default. Complete the loop arrows and make sure things are clean. Use different sized arrows based on possibilities (arrow width = how many symbols the transition accepts, in the style of a flow diagram where arrow width encodes size).
+
+5. Make sure all twenty Regex Explorer exercises are covered as presets:
+   Everyday text: 1. First and last names, 2. Instagram handles, 3. Email addresses, 4. Phone numbers, 5. Social Security numbers, 6. Log file names.
+   Developer work: 7. Capture parts of a date, 8. Error lines in a log, 9. Failed requests in an access log, 10. Stack trace locations, 11. Leak summary from Valgrind, 12. Memory addresses, 13. IP addresses, 14. Version numbers, 15. Git commit hashes, 16. Environment variables in a script, 17. Quoted strings, 18. Function names in a file, 19. TODO comments with an owner, 20. Reorder names with a replacement.
+
+6. Add a button for the prompt used to create the application (the full package). It should pop up in a modal and users should be able to copy it to the clipboard.
+
+
+==========================================================================
+CORRECTIONS MADE DURING THE BUILD (where the prompt above was wrong)
+==========================================================================
+
+• (b*ab*ab*)* is not a two-state machine: it rejects “b”, so its minimal DFA has 4 states. The preset uses b*(ab*ab*)*, which is the 2-state “even number of a’s” machine.
+• “aba” is not a rejecting example for that preset (it has two a’s). The preset rejects “abaa”.
+• (b*ab*ab*)* and (b+ab*a)* are not equivalent; the shortest distinguishing string is “b”.
+• (a+)+ has 2 live states, not 1, because it cannot accept ε.
+• The alphabet is printable ASCII plus tab and newline, so that \t, \n and \s can be tested.
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" crossorigin="anonymous"></script>
 <script>
 'use strict';
@@ -525,7 +886,7 @@ anchor      = "^" at the start, "$" at the end (no-ops)</pre>
    opts = { notation: 'prog' | 'text', sigma: <sigma object> }
    ===================================================================== */
 var TM = (function () {
-  var MAX_STATES = 150, NFA_LIMIT = 6000, DFA_LIMIT = 1200;
+  var MAX_STATES = 150, NFA_LIMIT = 30000, DFA_LIMIT = 4000;
 
   // ---------- alphabet ----------
   function makeSigma(chars, label) {
@@ -1496,7 +1857,7 @@ var TM = (function () {
       ranks[k].sort(function (a, b) { return (bary[a] - bary[b]) || (a - b); });
       ranks[k].forEach(function (x, j) { slot[x] = j - (ranks[k].length - 1) / 2; });
     }
-    var R = maxRank + 1, perRow = R <= 13 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows = Math.ceil(R / perRow);
+    var R = maxRank + 1, perRow = R <= 8 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows = Math.ceil(R / perRow);
     var dx = n <= 8 ? 2.1 : 1.75, dy = 1.7, dz = rows > 1 ? 0.12 : 0.36;
     var rowTop = [0];
     for (var r = 0; r < rows; r++) {
@@ -1541,8 +1902,36 @@ var TM = (function () {
     return { pos: pos, rank: rank, min: min, max: max, dx: dx };
   }
 
+  /* Presets: the twenty Regex Explorer exercises, rewritten as whole-string regular patterns
+     (no \b, no backreferences), followed by three theory examples. */
+  var PRESETS = [
+    { group: 'Everyday text', name: '1. First and last names', p: '[A-Z][a-z]+ [A-Z][a-z]+', acc: 'Dana Whitfield', rej: 'dana whitfield' },
+    { group: 'Everyday text', name: '2. Instagram handles', p: '@[A-Za-z0-9_.]{1,30}', acc: '@morgan.state_u', rej: '@morgan state' },
+    { group: 'Everyday text', name: '3. Email addresses', p: '[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+', acc: 'dana.whitfield@morgan.edu', rej: 'support@localhost' },
+    { group: 'Everyday text', name: '4. Phone numbers', p: '(\\+1[ -]?)?\\(?\\d{3}\\)?[ .-]?\\d{3}[ .-]?\\d{4}', acc: '(410) 555-0199', rej: '410-555-019' },
+    { group: 'Everyday text', name: '5. Social Security numbers', p: '\\d{3}-\\d{2}-\\d{4}', acc: '219-09-9999', rej: '219-09-999' },
+    { group: 'Everyday text', name: '6. Log file names', p: '[\\w.-]+\\.log(\\.\\d+)?', acc: 'app.log.2', rej: 'catalog.pdf' },
+    { group: 'Developer work', name: '7. Capture parts of a date', p: '(\\d{4})-(\\d{2})-(\\d{2})', acc: '2026-11-11', rej: '11/11/2026' },
+    { group: 'Developer work', name: '8. Error lines in a log', p: '(.* )?ERROR:? .+', acc: '16:02:11 ERROR disk quota exceeded', rej: '16:02:11 INFO started' },
+    { group: 'Developer work', name: '9. Failed requests in an access log', p: '\\S+ "(GET|POST|PUT|DELETE) \\S+" [45]\\d{2}( \\d+)?', acc: '10.0.0.5 "GET /grades" 500 312', rej: '10.0.0.5 "GET /grades" 200 312' },
+    { group: 'Developer work', name: '10. Stack trace locations', p: '\\s*at [\\w.$<>]+\\([\\w.]+:\\d+\\)', acc: '  at edu.morgan.Main.run(Main.java:42)', rej: 'at Main.run(Main.java)' },
+    { group: 'Developer work', name: '11. Leak summary from Valgrind', p: '==\\d+==\\s+definitely lost: [\\d,]+ bytes in [\\d,]+ blocks', acc: '==4127==   definitely lost: 1,024 bytes in 3 blocks', rej: '==4127==   still reachable: 72 bytes in 1 blocks' },
+    { group: 'Developer work', name: '12. Memory addresses', p: '0x[0-9a-fA-F]{8,16}', acc: '0x7ffee4b8c9a0', rej: '0x7ffg1234' },
+    { group: 'Developer work', name: '13. IP addresses', p: '(\\d{1,3}\\.){3}\\d{1,3}', acc: '10.0.0.5', rej: '6.8.0.1.5' },
+    { group: 'Developer work', name: '14. Version numbers', p: 'v?\\d+\\.\\d+\\.\\d+(-[\\w.]+)?', acc: 'v2.4.0', rej: '1.82' },
+    { group: 'Developer work', name: '15. Git commit hashes', p: '[0-9a-f]{7,40}', acc: '9fceb02', rej: '9fzeb02' },
+    { group: 'Developer work', name: '16. Environment variables in a script', p: '(export )?[A-Z_][A-Z0-9_]*=.*', acc: 'export PATH=/usr/local/bin', rej: 'path=/usr/bin' },
+    { group: 'Developer work', name: '17. Quoted strings', p: '"([^"\\\\]|\\\\.)*"', acc: '"say \\"hi\\""', rej: '"unterminated' },
+    { group: 'Developer work', name: '18. Function names in a file', p: 'def [A-Za-z_]\\w*\\(.*\\):', acc: 'def parse_line(text):', rej: 'def 2fast(x):' },
+    { group: 'Developer work', name: '19. TODO comments with an owner', p: '.*(#|//) ?TODO\\(\\w+\\):.*', acc: '// TODO(jwhite): handle empty tape', rej: '// TODO: handle empty tape' },
+    { group: 'Developer work', name: '20. Reorder names with a replacement', p: '([A-Z][a-z]+), ([A-Z][a-z]+)', acc: 'Whitfield, Dana', rej: 'Dana Whitfield' },
+    { group: 'Theory', name: 'Hex color', p: '#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})', acc: '#1F5FA8', rej: '#1234' },
+    { group: 'Theory', name: 'Even number of a’s', p: 'b*(ab*ab*)*', acc: 'abab', rej: 'abaa' },
+    { group: 'Theory', name: 'Textbook: at least two 0s', p: '(0+1)*0(0+1)*0(0+1)*', acc: '10101', rej: '101', notation: 'text', sigma: '{0,1}' }
+  ];
+
   return {
-    MAX_STATES: MAX_STATES, ASCII: ASCII, ParseError: ParseError, ALL_PRODUCTIONS: ALL_PRODUCTIONS, MSG: MSG,
+    PRESETS: PRESETS, MAX_STATES: MAX_STATES, ASCII: ASCII, ParseError: ParseError, ALL_PRODUCTIONS: ALL_PRODUCTIONS, MSG: MSG,
     parse: parse, toNFA: toNFA, toDFA: toDFA, minimize: minimize, step: step, run: run, compile: compile,
     parseSigmaSpec: parseSigmaSpec, sigmaName: sigmaName, vis: vis, plural: plural, setLabel: setLabel, setMembers: setMembers,
     desugar: desugar, desugarToAst: desugarToAst, printDesugared: printDesugared, breakdown: breakdown, why: why,
@@ -1601,16 +1990,8 @@ TM.selfTests = async function (ui, log) {
     return bad;
   }
   var SSN = '\\d{3}-\\d{2}-\\d{4}';
-  var PRESETS = [
-    ['Social Security number', SSN, '219-09-9999', '219-09-999'],
-    ['US phone number', '(\\+1[ -]?)?\\(?\\d{3}\\)?[ .-]?\\d{3}[ .-]?\\d{4}', '(410) 555-0199', '410-555-019'],
-    ['Email address', '[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+', 'dana.whitfield@morgan.edu', 'support@localhost'],
-    ['Hex color', '#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})', '#1F5FA8', '#1234'],
-    ['IPv4 address', '(\\d{1,3}\\.){3}\\d{1,3}', '10.0.0.5', '6.8.0.1.5'],
-    ['Semantic version', 'v?\\d+\\.\\d+\\.\\d+(-[\\w.]+)?', 'v2.4.0', '1.82'],
-    ['Log file name', '[\\w.-]+\\.log(\\.\\d+)?', 'app.log.2', 'catalog.pdf'],
-    ['Even number of a’s', 'b*(ab*ab*)*', 'abab', 'abaa']
-  ];
+  var PRESETS = TM.PRESETS.filter(function (p) { return p.notation !== 'text'; }).map(function (p) { return [p.name, p.p, p.acc, p.rej]; });
+  var EMAIL = '[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+', HEX = '#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})';
 
   // ---------------------------------------------------------------- 1. grammar
   section('Grammar: rejected on purpose');
@@ -1627,6 +2008,8 @@ TM.selfTests = async function (ui, log) {
   var big = C('[a-z]{140}x{20}');
   ok(!big.ok && big.error.cap && big.error.message.indexOf(TM.MSG.tooBig) === 0, 'a repeat needing more than 150 states is refused');
   PRESETS.forEach(function (p) { ok(!(TM.parse(p[1]) instanceof TM.ParseError), 'preset parses: ' + p[0]); });
+  ok(TM.PRESETS.filter(function (p) { return /^\d+\. /.test(p.name); }).length === 20 && TM.PRESETS.every(function (p) { var c = TM.compile(p.p, p.notation === 'text' ? { notation: 'text', sigma: TM.parseSigmaSpec(p.sigma).sigma } : {}); return c.ok && TM.run(c.machine, p.acc).accepted && !TM.run(c.machine, p.rej).accepted; }),
+    'all twenty Regex Explorer exercises (and the theory presets) compile, accept their example and reject their counter-example');
 
   // ---------------------------------------------------------------- 2. correctness of the presets
   section('Correctness: presets vs RegExp (200 strings each)');
@@ -1665,7 +2048,7 @@ TM.selfTests = async function (ui, log) {
   ok(des('\\d{2,3}') === '(0+1+…+9)(0+1+…+9)((0+1+…+9)+ε)', '\\d{2,3} desugars as specified', des('\\d{2,3}'));
   ok(des('a?') === '(a+ε)', 'a? → (a+ε)', des('a?')); ok(des('a+') === 'aa*', 'a+ → aa*', des('a+'));
   ok(des('a{2,}') === 'aaa*' && des('a{3}') === 'aaa' && des('[abc]') === '(a+b+c)' && des('(?:ab)*') === '(ab)*', 'r{n,}, r{n}, classes and groups desugar');
-  PRESETS.map(function (p) { return p[1]; }).concat(['\\d{2,3}', 'a?', 'a+', '(a|b?)c', 'a{0}', '[^"]*', 'a*?b+?c??']).forEach(function (p) {
+  PRESETS.map(function (p) { return p[1]; }).filter(function (p) { return M(p).live <= 25; }).concat(['\\d{2,3}', 'a?', 'a+', '(a|b?)c', 'a{0}', '[^"]*', 'a*?b+?c??']).forEach(function (p) {
     var c = C(p), back = TM.minimize(TM.toDFA(TM.toNFA(TM.desugarToAst(TM.desugar(c.ast), TM.ASCII), TM.ASCII)));
     ok(TM.isomorphic(c.machine, back), 'desugared ' + p + ' compiles to an isomorphic DFA');
   });
@@ -1691,7 +2074,7 @@ TM.selfTests = async function (ui, log) {
   ok(eq('\\d{2}', '[0-9][0-9]').equivalent && !eq('a|b', 'a').equivalent, 'equivalence also works in programming notation');
   var g = TM.grammar(M('ab*'));
   ok(g.length === 2 && g[0].nt === 'S' && g[0].prods.join('|') === 'aA' && g[1].nt === 'A' && g[1].prods.join('|') === 'bA|ε', 'ab* gives S → aA, A → bA | ε');
-  [SSN, PRESETS[2][1], 'a(b|c)*d?'].forEach(function (p) {
+  [SSN, EMAIL, 'a(b|c)*d?'].forEach(function (p) {
     var m = M(p), rows = TM.grammar(m), good = rows.length === m.live;
     rows.forEach(function (row, s) {
       var want = [];
@@ -1735,7 +2118,7 @@ TM.selfTests = async function (ui, log) {
     for (;;) { var sy = pos < tape.length ? tape[pos] : blank, nx = table[state] && table[state][sy]; if (!nx) break; state = nx; pos++; }
     return state === 'accept';
   }
-  [[SSN, ['219-09-9999', '219-09-999', '219-09-99999', '', 'x219-09-9999']], [PRESETS[3][1], ['#1F5FA8', '#1234', '#abc', '#']], ['b*(ab*ab*)*', ['abab', 'aba', '', 'bb', 'abba']]].forEach(function (t) {
+  [[SSN, ['219-09-9999', '219-09-999', '219-09-99999', '', 'x219-09-9999']], [HEX, ['#1F5FA8', '#1234', '#abc', '#']], ['b*(ab*ab*)*', ['abab', 'aba', '', 'bb', 'abba']]].forEach(function (t) {
     var m = M(t[0]), good = true;
     t[1].forEach(function (s) {
       if ((runMorphett(TM.exportMorphett(m, t[0], s), s) === 'halt-accept') !== acc(m, s)) good = false;
@@ -1909,6 +2292,16 @@ TM.selfTests = async function (ui, log) {
       onp = document.querySelectorAll('#patMirror .piece.on');
       ok(ui.app.selEdge === -1 && onp.length === 1 && onp[0].textContent === '\\d{3}' && ui.traceRows()[0].cells[5] === '\\d{3}', 'Source: with nothing selected the step just taken highlights its piece, and the trace names it');
 
+      // 2D drawing: complete self-loops, arrow width by number of symbols
+      ui.setPattern('a*\\d-'); ui.setView('2d');
+      var lp = document.querySelector('#view2d .edge[data-edge="' + ui.app.dedges.filter(function (x) { return x.loop; })[0].id + '"]');
+      var ln = lp.querySelector('.line'), endPt = ln.getPointAtLength(ln.getTotalLength()), tipXY = lp.querySelector('polygon').getAttribute('points').split(' ')[0].split(',').map(Number);
+      var st0 = document.querySelector('#view2d .state[data-state="0"]').getAttribute('transform').match(/-?[\d.]+/g).map(Number);
+      ok(Math.hypot(endPt.x - tipXY[0], endPt.y - tipXY[1]) < 14 && Math.abs(Math.hypot(tipXY[0] - st0[0], tipXY[1] - st0[1]) - 21.5) < 7.5,
+        '2D: a self-loop is a closed arc whose arrowhead lands on the rim of its state');
+      var wOf = function (lab) { var e = ui.app.dedges.filter(function (x) { return x.label === lab && !x.loop; })[0]; return parseFloat(document.querySelector('#view2d .edge[data-edge="' + e.id + '"]').style.getPropertyValue('--w')); };
+      ok(wOf('0–9') > wOf('-') * 2.5, '2D: an arrow carrying ten symbols is drawn much wider than a one-symbol arrow', wOf('0–9') + ' vs ' + wOf('-'));
+
       // rendering
       ui.setView(ui.view3d.ok ? '3d' : '2d');
       ui.setPattern(SSN);
@@ -1971,6 +2364,9 @@ TM.selfTests = async function (ui, log) {
       ok(el('stageBadge').textContent === 'Not run · ‘2’ is not in Σ = {0,1}' && el('stepBtn').disabled, 'Failure: a symbol outside Σ is “Not run” (textbook notation)');
       ui.setPattern('(a+b*)*', { notation: 'text', sigma: '{a,b}', compare: '(a+b)*' });
       ok(el('cmpMsg').textContent === 'Equivalent', 'Equivalence checker reports Equivalent in the panel', el('cmpMsg').textContent);
+      ui.showPrompt(true);
+      ok(!el('promptModal').hidden && el('promptBody').textContent.indexOf('Build Prompt: 3D Turing Machine Regex Simulator') === 0 && el('promptBody').textContent.indexOf('FOLLOW-UP REQUESTS') > 0, 'Prompt: the modal shows the full build prompt');
+      ui.showPrompt(false);
       ok(document.documentElement.outerHTML.length < 400000, 'File: the page is under 400 KB', document.documentElement.outerHTML.length + ' characters');
     } catch (e) { ok(false, 'UI tests threw', String(e && e.stack || e)); }
     // restore what the user had
@@ -2008,22 +2404,12 @@ var TMApp = (function () {
   const reduceMotion = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const vis = TM.vis;
 
-  const PRESETS = [
-    { name: 'Social Security number', p: '\\d{3}-\\d{2}-\\d{4}', acc: '219-09-9999', rej: '219-09-999' },
-    { name: 'US phone number', p: '(\\+1[ -]?)?\\(?\\d{3}\\)?[ .-]?\\d{3}[ .-]?\\d{4}', acc: '(410) 555-0199', rej: '410-555-019' },
-    { name: 'Email address', p: '[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+', acc: 'dana.whitfield@morgan.edu', rej: 'support@localhost' },
-    { name: 'Hex color', p: '#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})', acc: '#1F5FA8', rej: '#1234' },
-    { name: 'IPv4 address', p: '(\\d{1,3}\\.){3}\\d{1,3}', acc: '10.0.0.5', rej: '6.8.0.1.5' },
-    { name: 'Semantic version', p: 'v?\\d+\\.\\d+\\.\\d+(-[\\w.]+)?', acc: 'v2.4.0', rej: '1.82' },
-    { name: 'Log file name', p: '[\\w.-]+\\.log(\\.\\d+)?', acc: 'app.log.2', rej: 'catalog.pdf' },
-    { name: 'Even number of a’s', p: 'b*(ab*ab*)*', acc: 'abab', rej: 'abaa' },
-    { name: 'Textbook: at least two 0s', p: '(0+1)*0(0+1)*0(0+1)*', acc: '10101', rej: '101', notation: 'text', sigma: '{0,1}' }
-  ];
+  const PRESETS = TM.PRESETS, START = 4; // open on the Social Security number worked example
 
   const app = {
     notation: 'prog', compiled: null, machine: null, layout: null, bows: [],
     sim: { input: '', res: null, pos: 0 }, anim: null, playing: false, nextAt: 0, haltAt: 0, speed: 1,
-    breakpoints: new Set(), view: '3d', pin: false, highlight: true, selTok: null, tuplesExpanded: false,
+    breakpoints: new Set(), view: '2d', pin: false, highlight: true, selTok: null, tuplesExpanded: false,
     pinned: -1, lastVerdict: '', batchMs: 0, expand: false, dedges: [], dmap: [], pieces: [], pieceIdx: new Map(), selEdge: -1, selSet: new Set()
   };
   const stage = $('stage');
@@ -2062,7 +2448,7 @@ var TMApp = (function () {
     const ph = $('placeholder');
     ph.hidden = c.ok;
     ph.textContent = c.ok ? '' : (c.error.cap ? c.error.message : 'Fix the pattern to build the machine');
-    $('stats').textContent = c.ok ? TM.plural(c.machine.live, 'state') + (c.machine.sink >= 0 ? ' + sink' : '') + ' · minimized DFA · ' + TM.plural(c.machine.classes.length, 'input class').replace(/classs$/, 'classes') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : '') : '';
+    $('stats').textContent = c.ok ? TM.plural(c.machine.live, 'state') + (c.machine.sink >= 0 ? ' + sink' : '') + ' · minimized DFA · ' + TM.plural(c.machine.classes.length, 'input class').replace(/classs$/, 'classes') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : ' · wider arrow = more symbols') : '';
     view3d.build(); view2d.build(); tableView.build();
     loadString(app.sim.input);
   }
@@ -2199,7 +2585,7 @@ var TMApp = (function () {
       const syms = symsOf(e), split = syms.length > 1 && syms.length <= cut, groups = split ? syms.map(x => [x]) : [syms];
       groups.forEach((g, k) => {
         const ch = m.sigma.chars[g[0]];
-        const d = { id: app.dedges.length, eid: e.id, from: e.from, to: e.to, loop: e.loop, k: k, n: groups.length, label: split ? vis(ch) : e.label, full: split ? 'the symbol ‘' + vis(ch) + '’ (one of ' + e.full + ')' : e.full };
+        const d = { id: app.dedges.length, eid: e.id, from: e.from, to: e.to, loop: e.loop, k: k, n: groups.length, count: g.length, label: split ? vis(ch) : e.label, full: split ? 'the symbol ‘' + vis(ch) + '’ (one of ' + e.full + ')' : e.full };
         const ps = new Set(), doneC = new Set();
         g.forEach(x => { if (!doneC.has(m.classOf[x])) { doneC.add(m.classOf[x]); piecesFor(e.from, x).forEach(p => ps.add(p)); } });
         d.pieces = Array.from(ps).sort((x, y) => x - y); d.color = d.pieces.length === 1 ? app.pieces[d.pieces[0]].color : -1;
@@ -2213,7 +2599,7 @@ var TMApp = (function () {
     $('denseBtn').setAttribute('aria-pressed', String(app.expand));
     if (!app.machine) return;
     app.selEdge = -1; computeDraw(); hideTip(true);
-    $('stats').textContent = $('stats').textContent.replace(/ · \d+ per-symbol edges$/, '') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : '');
+    $('stats').textContent = $('stats').textContent.replace(/ · (\d+ per-symbol edges|wider arrow = more symbols)$/, '') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : ' · wider arrow = more symbols');
     view3d.build(); view2d.build(); syncAll();
   }
 
@@ -2625,7 +3011,7 @@ var TMApp = (function () {
       const st = sprite('start', 0.17, col.css.accent, col.css.bg, 500); st.position.set(sp0.x - R - 0.55, sp0.y + 0.2, sp0.z); G.add(st); labels.push(st);
       // transitions: one tube per drawn edge; per-symbol edges fan out in a ring around the straight line
       app.dedges.forEach(e => {
-        const a = P[e.from], b = P[e.to], dense = e.n > 1, ang = dense ? Math.PI * 2 * e.k / e.n : 0, tr = dense ? 0.017 : 0.027;
+        const a = P[e.from], b = P[e.to], dense = e.n > 1, ang = dense ? Math.PI * 2 * e.k / e.n : 0, tr = 0.017 + 0.0075 * Math.log2(e.count); // thicker tube = more symbols
         const base = e.color >= 0 ? col.piece[e.color] : col.muted, mat = new T3.MeshStandardMaterial({ color: base, roughness: 0.55 }); // coloured like its piece of the pattern
         let curve, pointAt, labelPos, tipPos, tipDir;
         if (e.loop) { // a small circle above the state; per-symbol loops lean outwards like petals
@@ -2642,19 +3028,19 @@ var TMApp = (function () {
           const n = l2 > 1e-3 ? new T3.Vector3(-d.y / l2, d.x / l2, 0) : new T3.Vector3(0, 1, 0);
           const w = new T3.Vector3().crossVectors(d.clone().normalize(), n), fan = n.clone().multiplyScalar(Math.cos(ang)).addScaledVector(w, Math.sin(ang));
           const ctrl = a.clone().add(b).multiplyScalar(0.5).addScaledVector(n, app.bows[e.eid] * len).addScaledVector(fan, dense ? clamp(e.n * 0.09, 0.4, 1.6) : 0);
-          const q = new T3.QuadraticBezierCurve3(a, ctrl, b), endR = (m.accept[e.to] ? R * 1.48 : R) + (dense ? 0.12 : 0.2);
+          const q = new T3.QuadraticBezierCurve3(a, ctrl, b), endR = (m.accept[e.to] ? R * 1.48 : R) + 0.2 * clamp(tr / 0.027, 0.6, 2.2);
           let t0 = 0, t1 = 1;
           for (let k = 0; k <= 80; k++) { const pt = q.getPoint(k / 80); if (pt.distanceTo(a) < R) t0 = k / 80; if (pt.distanceTo(b) >= endR) t1 = k / 80; else break; }
           if (t1 <= t0) { t0 = 0.2; t1 = 0.8; }
           const pts = []; for (let k = 0; k <= 20; k++) pts.push(q.getPoint(t0 + (t1 - t0) * k / 20));
           curve = new T3.CatmullRomCurve3(pts);
           pointAt = t => q.getPoint(t);
-          tipDir = q.getTangent(t1); tipPos = q.getPoint(t1).addScaledVector(tipDir, dense ? 0.06 : 0.1);
+          tipDir = q.getTangent(t1); tipPos = q.getPoint(t1).addScaledVector(tipDir, 0.1 * clamp(tr / 0.027, 0.6, 2.2));
           labelPos = dense ? q.getPoint(0.5).addScaledVector(fan, 0.13) : q.getPoint(0.5).addScaledVector(n, 0.24);
         }
         const tube = new T3.Mesh(new T3.TubeGeometry(curve, e.loop ? 28 : dense ? 14 : 20, tr, dense ? 5 : 6, false), mat);
         tube.userData = { kind: 'edge', id: e.id }; G.add(tube); V.edgeMeshes.push(tube);
-        const head = cone(tipPos, tipDir, mat); head.userData.kind = 'edge'; head.userData.id = e.id; if (dense) head.scale.setScalar(0.6); G.add(head);
+        const head = cone(tipPos, tipDir, mat); head.userData.kind = 'edge'; head.userData.id = e.id; head.scale.setScalar(clamp(tr / 0.027, 0.6, 2.2)); G.add(head);
         const lab = sprite(e.label, dense ? 0.15 : 0.2, col.css.ink, col.css.bg, 500); lab.position.copy(labelPos); G.add(lab); labels.push(lab);
         edgeObjs[e.id] = { mat: mat, pointAt: pointAt, curve: curve, r: tr, glow: null, base: base };
       });
@@ -2807,7 +3193,7 @@ var TMApp = (function () {
         want.forEach(id => {
           const eo = edgeObjs[id]; if (!eo) return;
           if (!eo.glow) {
-            eo.glow = new T3.Mesh(new T3.TubeGeometry(eo.curve, 18, eo.r * 2.7, 8, false), new T3.MeshBasicMaterial({ color: col.hl, transparent: true, opacity: 0.8, depthWrite: false }));
+            eo.glow = new T3.Mesh(new T3.TubeGeometry(eo.curve, 18, eo.r + 0.045, 8, false), new T3.MeshBasicMaterial({ color: col.hl, transparent: true, opacity: 0.8, depthWrite: false }));
             V.group.add(eo.glow);
           }
           eo.glow.visible = true;
@@ -2885,48 +3271,68 @@ var TMApp = (function () {
     let root = null, P = [], particle = null, faildash = null, box = null;
     function apply() { if (root) root.setAttribute('transform', 'translate(' + W.tf.x + ',' + W.tf.y + ') scale(' + W.tf.k + ')'); }
     function unit(x, y) { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; }
-    function rot(x, y, cx, cy, deg) { const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r); return [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]; }
+    let loopDir = [];
+    const widthOf = e => 1.5 + 1.45 * Math.log2(e.count); // arrow width grows with the number of symbols it accepts
+    const fitText = (s, max) => s.length <= max ? s : s.slice(0, Math.max(2, max - 1)).replace(/[, ]+$/, '') + '…';
     function edgeGeom(e) { // e is a drawn edge; e.k of e.n when symbols are drawn individually
-      const m = app.machine, a = P[e.from], b = P[e.to], dense = e.n > 1;
-      if (e.loop) {
-        const cx = a.x, cy = a.y - RAD - 11, r = 14, ang = -0.86, tx = a.x + (RAD + 1) * Math.cos(ang), ty = a.y + (RAD + 1) * Math.sin(ang), u = unit(-0.5, 0.87);
-        const deg = dense ? 360 * e.k / e.n : 0, lp = rot(cx, cy - r - 8, a.x, a.y, deg);
-        return { d: 'M ' + (cx - r) + ' ' + cy + ' a ' + r + ' ' + r + ' 0 1 1 ' + (2 * r) + ' 0 a ' + r + ' ' + r + ' 0 0 1 ' + (tx - u[0] * 8 - cx - r).toFixed(1) + ' ' + (ty - u[1] * 8 - cy).toFixed(1),
-          tri: tri(tx, ty, u), lx: lp[0], ly: lp[1], rot: deg ? { deg: deg, cx: a.x, cy: a.y } : null };
+      const m = app.machine, a = P[e.from], b = P[e.to], dense = e.n > 1, w = widthOf(e), hl = 7 + w * 1.3, hw = 3 + w * 0.9;
+      const rim = s => RAD + (m.accept[s] ? 5.5 : 0) + 1.5;
+      if (e.loop) { // a circle that leaves the state and comes back to it, ending in an arrowhead on the rim
+        const th = dense ? -Math.PI / 2 + 2 * Math.PI * e.k / e.n : loopDir[e.from], r = (dense ? 10 : 13) + w, Rs = rim(e.from), D = Rs + r * 0.55;
+        const cx = a.x + D * Math.cos(th), cy = a.y + D * Math.sin(th), beta = th + Math.PI;
+        const phi = Math.acos(clamp((D * D + r * r - Rs * Rs) / (2 * D * r), -1, 1)), g0 = beta + phi, g1 = beta - phi + 2 * Math.PI, ge = g1 - hl / r;
+        const pt = g => [cx + r * Math.cos(g), cy + r * Math.sin(g)], A = pt(g0), E = pt(ge), B = pt(g1), u = unit(B[0] - E[0], B[1] - E[1]);
+        return { d: 'M ' + A[0].toFixed(1) + ' ' + A[1].toFixed(1) + ' A ' + r.toFixed(1) + ' ' + r.toFixed(1) + ' 0 1 1 ' + E[0].toFixed(1) + ' ' + E[1].toFixed(1),
+          tri: tri(B[0], B[1], u, hl, hw), lx: cx + (r + w / 2 + 11) * Math.cos(th), ly: cy + (r + w / 2 + 11) * Math.sin(th), w: w, label: fitText(e.label, 20) };
       }
       const vx = b.x - a.x, vy = b.y - a.y, len = Math.hypot(vx, vy) || 1, nx = vy / len, ny = -vx / len;
       const bow = app.bows[e.eid] * len + (dense ? (e.k - (e.n - 1) / 2) * 2 * Math.min(16, 150 / e.n) : 0); // parallel edges fan out
       const cx = (a.x + b.x) / 2 + nx * bow, cy = (a.y + b.y) / 2 + ny * bow;
-      const sa = unit(cx - a.x, cy - a.y), eb = unit(cx - b.x, cy - b.y), endR = RAD + (m.accept[e.to] ? 5.5 : 0) + 1.5;
-      const p0 = [a.x + sa[0] * RAD, a.y + sa[1] * RAD], tipx = b.x + eb[0] * endR, tipy = b.y + eb[1] * endR, bx = tipx + eb[0] * 9, by = tipy + eb[1] * 9;
-      const t = dense ? [0.5, 0.36, 0.64, 0.43, 0.57][e.k % 5] : 0.5, u1 = 1 - t, lo = dense ? 0 : 11;
+      const sa = unit(cx - a.x, cy - a.y), eb = unit(cx - b.x, cy - b.y), endR = rim(e.to);
+      const p0 = [a.x + sa[0] * RAD, a.y + sa[1] * RAD], tipx = b.x + eb[0] * endR, tipy = b.y + eb[1] * endR, bx = tipx + eb[0] * hl, by = tipy + eb[1] * hl;
+      const t = dense ? [0.5, 0.36, 0.64, 0.43, 0.57][e.k % 5] : 0.5, u1 = 1 - t, lo = dense ? 0 : w / 2 + 10;
       return { d: 'M ' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' Q ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1),
-        tri: tri(tipx, tipy, [-eb[0], -eb[1]]), lx: u1 * u1 * p0[0] + 2 * u1 * t * cx + t * t * bx + nx * lo, ly: u1 * u1 * p0[1] + 2 * u1 * t * cy + t * t * by + ny * lo, rot: null };
+        tri: tri(tipx, tipy, [-eb[0], -eb[1]], hl, hw), lx: u1 * u1 * p0[0] + 2 * u1 * t * cx + t * t * bx + nx * lo, ly: u1 * u1 * p0[1] + 2 * u1 * t * cy + t * t * by + ny * lo,
+        w: w, label: fitText(e.label, Math.floor((len - 2 * RAD - hl - 12) / 7.7)) };
     }
-    function tri(tx, ty, u) { // arrowhead with its tip at (tx,ty), pointing along u
-      const bx = tx - u[0] * 9, by = ty - u[1] * 9;
-      return tx.toFixed(1) + ',' + ty.toFixed(1) + ' ' + (bx - u[1] * 4.5).toFixed(1) + ',' + (by + u[0] * 4.5).toFixed(1) + ' ' + (bx + u[1] * 4.5).toFixed(1) + ',' + (by - u[0] * 4.5).toFixed(1);
+    function tri(tx, ty, u, hl, hw) { // arrowhead with its tip at (tx,ty), pointing along u
+      const bx = tx - u[0] * hl, by = ty - u[1] * hl;
+      return tx.toFixed(1) + ',' + ty.toFixed(1) + ' ' + (bx - u[1] * hw).toFixed(1) + ',' + (by + u[0] * hw).toFixed(1) + ' ' + (bx + u[1] * hw).toFixed(1) + ',' + (by - u[0] * hw).toFixed(1);
+    }
+    function chooseLoopDirs() { // point each self-loop into the emptiest direction around its state
+      const m = app.machine, cand = [-90, 90, -45, -135, 45, 135].map(d => d * Math.PI / 180);
+      loopDir = P.map((p, s) => {
+        const used = s === m.start ? [Math.PI] : [];
+        app.dedges.forEach(e => { if (!e.loop && (e.from === s || e.to === s)) { const o = P[e.from === s ? e.to : e.from]; used.push(Math.atan2(o.y - p.y, o.x - p.x)); } });
+        let best = cand[0], score = -1;
+        cand.forEach((c, i) => {
+          let near = Math.PI;
+          used.forEach(u => { let d = Math.abs(c - u) % (2 * Math.PI); if (d > Math.PI) d = 2 * Math.PI - d; near = Math.min(near, d); });
+          if (near - i * 0.06 > score) { score = near - i * 0.06; best = c; }
+        });
+        return best;
+      });
     }
     W.build = function () {
       svg.textContent = ''; W.states = []; W.edges = {}; root = null;
       const m = app.machine, L = app.layout;
       if (!m) return;
       root = sv('g'); svg.append(root);
-      P = L.pos.map(p => ({ x: p.x * S, y: -p.y * S }));
+      P = L.pos.map(p => ({ x: p.x * S * 1.15, y: -p.y * S }));
+      chooseLoopDirs();
       const gE = sv('g'), gS = sv('g');
-      app.dedges.forEach(e => {
+      app.dedges.slice().sort((x, y) => y.count - x.count).forEach(e => { // widest first, so thin edges stay visible on top
         const geo = edgeGeom(e), g = sv('g', { class: 'edge' + (e.n > 1 ? ' dense' : ''), 'data-edge': e.id }), path = sv('path', { d: geo.d, class: 'line' });
-        const inner = sv('g', geo.rot ? { transform: 'rotate(' + geo.rot.deg.toFixed(1) + ' ' + geo.rot.cx.toFixed(1) + ' ' + geo.rot.cy.toFixed(1) + ')' } : {});
-        const text = sv('text', { x: geo.lx.toFixed(1), y: geo.ly.toFixed(1), 'dominant-baseline': 'central' }); text.textContent = e.label;
-        inner.append(sv('path', { d: geo.d, class: 'glow' }), sv('path', { d: geo.d, class: 'hit' }), path, sv('polygon', { points: geo.tri }));
-        g.append(inner, text);
+        const text = sv('text', { x: geo.lx.toFixed(1), y: geo.ly.toFixed(1), 'dominant-baseline': 'central' }); text.textContent = geo.label;
+        g.append(sv('path', { d: geo.d, class: 'glow' }), sv('path', { d: geo.d, class: 'hit' }), path, sv('polygon', { points: geo.tri }), text);
         g.style.setProperty('--ec', e.color >= 0 ? 'var(--p' + e.color + ')' : 'var(--muted)');
-        gE.append(g); W.edges[e.id] = { g: g, path: path, rot: geo.rot };
+        g.style.setProperty('--w', geo.w.toFixed(2) + 'px');
+        gE.append(g); W.edges[e.id] = { g: g, path: path };
       });
       faildash = sv('path', { class: 'faildash' });
       const a0 = P[m.start];
       const arrow = sv('g', { class: 'startarrow' });
-      arrow.append(sv('line', { x1: a0.x - RAD - 34, y1: a0.y, x2: a0.x - RAD - 10, y2: a0.y }), sv('polygon', { points: tri(a0.x - RAD - 2, a0.y, [1, 0]) }));
+      arrow.append(sv('line', { x1: a0.x - RAD - 34, y1: a0.y, x2: a0.x - RAD - 10, y2: a0.y }), sv('polygon', { points: tri(a0.x - RAD - 2, a0.y, [1, 0], 9, 4.5) }));
       for (let s = 0; s < m.n; s++) {
         const g = sv('g', { class: 'state' + (s === m.sink ? ' sink' : ''), 'data-state': s, transform: 'translate(' + P[s].x.toFixed(1) + ',' + P[s].y.toFixed(1) + ')' });
         if (m.accept[s]) g.append(sv('circle', { class: 'ring', r: RAD + 5 }));
@@ -2938,7 +3344,7 @@ var TMApp = (function () {
       root.append(gE, faildash, arrow, gS, particle);
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       P.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
-      box = { x0: x0 - RAD - 50, y0: y0 - RAD - 60, x1: x1 + RAD + 30, y1: y1 + RAD + 26 };
+      box = { x0: x0 - RAD - 62, y0: y0 - RAD - 84, x1: x1 + RAD + 84, y1: y1 + RAD + 66 };
       if (!W.userMoved) W.fit(); else apply();
       W.sync();
     };
@@ -2946,7 +3352,7 @@ var TMApp = (function () {
       W.userMoved = false;
       const w = svg.clientWidth, hh = svg.clientHeight;
       if (!box || !w || !hh) return;
-      const top = 52, k = Math.min(w / (box.x1 - box.x0), (hh - top) / (box.y1 - box.y0), 1.7);
+      const top = 52, k = Math.min(w / (box.x1 - box.x0), (hh - top) / (box.y1 - box.y0), 1.3);
       W.tf = { k: k, x: w / 2 - k * (box.x0 + box.x1) / 2, y: top + (hh - top) / 2 - k * (box.y0 + box.y1) / 2 };
       apply();
     };
@@ -2974,7 +3380,6 @@ var TMApp = (function () {
         if ((isFired || onPath) && !W.edges[id].top) { W.edges[id].top = true; W.edges[id].g.parentNode.append(W.edges[id].g); } // draw the path above the rest
         else if (!isFired && !onPath) W.edges[id].top = false;
       }
-      W.firedRot = fired !== null && W.edges[fired] ? W.edges[fired].rot : null;
       const failFrom = toSink ? step.state : (d && d.halted && d.kind === 'no-transition' ? d.cur : -1);
       faildash.style.display = failFrom >= 0 ? 'block' : 'none';
       if (failFrom >= 0) faildash.setAttribute('d', failD(failFrom));
@@ -2985,8 +3390,7 @@ var TMApp = (function () {
       const a = app.anim;
       if (!a || !W.firedPath || !app.highlight) { particle.style.display = 'none'; return; }
       const p = clamp((now - a.t0) / a.dur, 0, 1), len = W.firedPath.getTotalLength(), pt = W.firedPath.getPointAtLength(ease(p) * len);
-      const xy = W.firedRot && W.firedPath !== faildash ? rot(pt.x, pt.y, W.firedRot.cx, W.firedRot.cy, W.firedRot.deg) : [pt.x, pt.y];
-      particle.style.display = 'block'; particle.setAttribute('cx', xy[0]); particle.setAttribute('cy', xy[1]);
+      particle.style.display = 'block'; particle.setAttribute('cx', pt.x); particle.setAttribute('cy', pt.y);
     };
     gestures(svg, {
       drag(dx, dy) { W.userMoved = true; W.tf.x += dx; W.tf.y += dy; apply(); hideTip(); },
@@ -3140,6 +3544,15 @@ var TMApp = (function () {
     if (!app.machine) return '';
     return kind === 'yaml' ? TM.exportYAML(app.machine, $('pattern').value, app.sim.input) : TM.exportMorphett(app.machine, $('pattern').value, app.sim.input, app.breakpoints);
   }
+  function showPrompt(on) {
+    $('promptModal').hidden = !on;
+    if (on) { $('promptBody').textContent = $('promptText').textContent.replace(/^\n/, ''); $('promptCopy').focus(); } else $('promptBtn').focus();
+  }
+  function copyText(text, btn, label) {
+    const done = ok => { btn.textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(() => { btn.textContent = label; }, 1400); };
+    const fallback = () => { const ta = h('textarea'); ta.value = text; document.body.append(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* ignore */ } ta.remove(); done(ok); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done(true), fallback); else fallback();
+  }
   function showHelp(on) { $('help').hidden = !on; if (on) $('helpClose').focus(); else $('helpBtn').focus(); }
 
   function wire() {
@@ -3162,7 +3575,11 @@ var TMApp = (function () {
       renderTuples();
     }));
     const sel = $('preset');
-    PRESETS.forEach((p, i) => sel.append(h('option', { value: i, text: p.name })));
+    PRESETS.forEach((p, i) => {
+      let og = sel.querySelector('optgroup[label="' + p.group + '"]');
+      if (!og) { og = h('optgroup', { label: p.group }); sel.append(og); }
+      og.append(h('option', { value: i, text: p.name }));
+    });
     sel.addEventListener('change', () => loadPreset(+sel.value));
     $('loadBtn').addEventListener('click', () => loadString($('string').value));
     $('string').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); loadString($('string').value); } });
@@ -3201,6 +3618,10 @@ var TMApp = (function () {
       download(b.dataset.export === 'yaml' ? 'machine.turingmachine-io.yaml' : 'machine.morphett.txt', exportText(b.dataset.export));
     }));
     document.addEventListener('click', () => menu(false));
+    $('promptBtn').addEventListener('click', () => showPrompt(true));
+    $('promptClose').addEventListener('click', () => showPrompt(false));
+    $('promptModal').addEventListener('click', e => { if (e.target === $('promptModal')) showPrompt(false); });
+    $('promptCopy').addEventListener('click', () => copyText($('promptBody').textContent, $('promptCopy'), 'Copy to clipboard'));
     $('helpBtn').addEventListener('click', () => showHelp(true));
     $('helpClose').addEventListener('click', () => showHelp(false));
     $('help').addEventListener('click', e => { if (e.target === $('help')) showHelp(false); });
@@ -3209,9 +3630,9 @@ var TMApp = (function () {
       TM.selfTests(api, line => { out.textContent += line + '\n'; out.scrollTop = out.scrollHeight; console.log(line); }).then(() => { $('selfTest').disabled = false; });
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { if (!$('help').hidden) showHelp(false); menu(false); hideTip(true); return; }
+      if (e.key === 'Escape') { if (!$('help').hidden) showHelp(false); if (!$('promptModal').hidden) showPrompt(false); menu(false); hideTip(true); return; }
       const t = e.target, tag = t.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey || !$('help').hidden) return;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey || !$('help').hidden || !$('promptModal').hidden) return;
       const onButton = tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A';
       if (e.key === 'ArrowRight') { e.preventDefault(); app.playing = false; stepForward(true); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); stepBack(); }
@@ -3234,12 +3655,12 @@ var TMApp = (function () {
   }
 
   const api = { app, PRESETS, view3d, view2d, tableView, disp, setPattern, setString, loadString, loadPreset, stepForward, stepBack, reset, jump, advance, togglePlay,
-    runToEnd, toggleBreakpoint, setExpand, setView, setNotation, runBatch, traceRows, copyTrace, exportText, recompile, isHalted, tick };
+    runToEnd, toggleBreakpoint, setExpand, showPrompt, setView, setNotation, runBatch, traceRows, copyTrace, exportText, recompile, isHalted, tick };
 
   view3d.init();
   wire();
   if (!view3d.ok) { setView('2d'); document.querySelector('[data-view="3d"]').disabled = true; document.querySelector('[data-view="3d"]').title = 'Three.js could not be loaded, so the 3D view is unavailable'; }
-  loadPreset(0);
+  loadPreset(START);
   setView(app.view);
   requestAnimationFrame(loop);
   return api;
