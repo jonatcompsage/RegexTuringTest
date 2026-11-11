@@ -57,21 +57,21 @@
   --muted: #566170; --line: #D5DBE3; --soft: #F4F6F9; --on-accent: #FFFFFF; --on-hl: #1B2430; --shadow: 0 1px 2px rgba(27,36,48,.08), 0 4px 14px rgba(27,36,48,.06);
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --p0: #1F5FA8; --p1: #C2410C; --p2: #7C3AED; --p3: #0E7490; --p4: #BE185D; --p5: #8A5A12;
+  --path: #F2A21E; --p0: #1F5FA8; --p1: #C2410C; --p2: #7C3AED; --p3: #0E7490; --p4: #BE185D; --p5: #8A5A12;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #141A22; --panel: #1C242E; --ink: #E8EDF3; --accent: #7FB0F0; --hl: #D9B81F; --accept: #5CCB8E; --reject: #FF8A80;
     --muted: #9BA7B6; --line: #2E3947; --soft: #232D39; --on-accent: #10161D; --on-hl: #141A22; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
-    --p0: #7FB0F0; --p1: #FB923C; --p2: #B79CFF; --p3: #4FD1E0; --p4: #F472B6; --p5: #D6A06A;
+    --path: #F5B041; --p0: #7FB0F0; --p1: #FB923C; --p2: #B79CFF; --p3: #4FD1E0; --p4: #F472B6; --p5: #D6A06A;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #141A22; --panel: #1C242E; --ink: #E8EDF3; --accent: #7FB0F0; --hl: #D9B81F; --accept: #5CCB8E; --reject: #FF8A80;
   --muted: #9BA7B6; --line: #2E3947; --soft: #232D39; --on-accent: #10161D; --on-hl: #141A22; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
-  --p0: #7FB0F0; --p1: #FB923C; --p2: #B79CFF; --p3: #4FD1E0; --p4: #F472B6; --p5: #D6A06A;
+  --path: #F5B041; --p0: #7FB0F0; --p1: #FB923C; --p2: #B79CFF; --p3: #4FD1E0; --p4: #F472B6; --p5: #D6A06A;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -256,29 +256,31 @@ table.delta tr.failrow th { color: var(--reject); }
 #view2d .edge path { fill: none; }
 #view2d .edge { cursor: pointer; }
 #view2d .edge path { fill: none; }
-#view2d .edge .line { stroke: var(--ec, var(--accent)); stroke-width: var(--w, 1.8px); transition: stroke-width .2s; }
+#view2d .edge .line { stroke: var(--ec, var(--accent)); stroke-width: var(--w, 1.8px); opacity: .92; transition: stroke-width .2s; }
 #view2d .edge polygon { fill: var(--ec, var(--accent)); }
 #view2d .edge text { font-size: 12.5px; fill: var(--ink); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 #view2d .edge .hit { stroke: transparent; stroke-width: calc(var(--w, 1.8px) + 12px); }
-#view2d .edge .glow { stroke: var(--hl); stroke-width: calc(var(--w, 1.8px) + 8px); stroke-linecap: round; opacity: 0; transition: opacity .2s, stroke-width .2s; }
+#view2d .edge .glow { stroke: var(--path); stroke-width: calc(var(--w, 1.8px) + 8px); stroke-linecap: round; opacity: 0; transition: opacity .2s, stroke-width .2s; }
 #view2d .edge.trail .glow { opacity: .9; }
 #view2d .edge.fired .glow { opacity: 1; stroke-width: calc(var(--w, 1.8px) + 13px); }
 #view2d .edge.sel .glow { opacity: .4; stroke: var(--ec, var(--accent)); stroke-width: calc(var(--w, 1.8px) + 12px); }
 #view2d .edge.trail text, #view2d .edge.fired text, #view2d .edge.sel text { font-weight: 600; }
 #view2d .edge.dense text { font-size: 10.5px; stroke-width: 3px; } #view2d .edge.dense .hit { stroke-width: 6px; } #view2d .edge.dense .glow { stroke-width: calc(var(--w, 1.5px) + 4px); }
 #view2d .state { cursor: pointer; }
-#view2d .state .body { fill: var(--panel); stroke: var(--ink); stroke-width: 1.8; transition: fill .3s, r .3s; }
-#view2d .state .ring { fill: none; stroke: var(--accept); stroke-width: 1.8; }
-#view2d .state text { font-size: 12.5px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; transition: fill .3s; }
-#view2d .state .bp { fill: var(--reject); display: none; } #view2d .state.bpon .bp { display: block; }
-#view2d .state.visited .body { fill: color-mix(in srgb, var(--hl) 50%, var(--panel)); }
-#view2d .state.active .body { fill: var(--hl); r: 24px; } #view2d .state.active text { fill: var(--on-hl); }
-#view2d .state.sink .body { stroke: var(--muted); stroke-dasharray: 4 3; r: 15px; } #view2d .state.sink text { fill: var(--muted); font-size: 11px; }
-#view2d .state.bad .body { fill: var(--reject); stroke: var(--reject); } #view2d .state.bad text { fill: var(--panel); }
-#view2d .state.bad.hollow .body { fill: var(--panel); stroke-width: 4; } #view2d .state.bad.hollow text { fill: var(--reject); }
+#view2d .state .body { fill: var(--sc, var(--accent)); stroke: var(--bg); stroke-width: 2.5; transition: fill .3s, transform .3s; }
+#view2d .state .ring { fill: none; stroke: var(--accept); stroke-width: 2.5; }
+#view2d .state .vring { fill: none; stroke: var(--path); stroke-width: 3.5; opacity: 0; transition: opacity .3s, transform .3s, stroke-width .3s; }
+#view2d .state text { font-size: 12.5px; font-weight: 600; fill: var(--on-accent); text-anchor: middle; dominant-baseline: central; transition: fill .3s; }
+#view2d .state .bp { fill: var(--reject); stroke: var(--bg); stroke-width: 1.5; display: none; } #view2d .state.bpon .bp { display: block; }
+#view2d .state.visited .vring, #view2d .state.active .vring { opacity: 1; }
+#view2d .state.active .body { fill: var(--hl); transform: scale(1.14); } #view2d .state.active text { fill: var(--on-hl); }
+#view2d .state.active .vring { stroke-width: 5.5; transform: scale(1.14); }
+#view2d .state.sink .body { fill: var(--soft); stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 3 3; } #view2d .state.sink text { fill: var(--muted); font-size: 11px; font-weight: 500; }
+#view2d .state.bad .body { fill: var(--reject); stroke: var(--bg); stroke-dasharray: none; } #view2d .state.bad text { fill: var(--panel); }
+#view2d .state.bad.hollow .body { fill: var(--panel); stroke: var(--reject); stroke-width: 4; } #view2d .state.bad.hollow text { fill: var(--reject); }
 #view2d .state.good .body { fill: var(--accept); } #view2d .state.good text { fill: var(--panel); }
 #view2d .state.flash .body { animation: flash3 .9s linear; }
-@keyframes flash3 { 0%, 33%, 66% { fill: var(--hl); } 16%, 50%, 83% { fill: var(--panel); } }
+@keyframes flash3 { 0%, 33%, 66% { fill: var(--hl); } 16%, 50%, 83% { fill: var(--sc, var(--panel)); } }
 #view2d .startarrow { stroke: var(--accent); stroke-width: 2.2; fill: var(--accent); }
 #view2d .faildash { fill: none; stroke: var(--reject); stroke-width: 2.5; stroke-dasharray: 7 5; display: none; }
 #view2d .particle { fill: var(--hl); stroke: var(--ink); stroke-width: 1; display: none; }
@@ -469,7 +471,7 @@ table.delta tr.failrow th { color: var(--reject); }
           <tr><td><kbd>R</kbd></td><td>Reset</td></tr>
           <tr><td><kbd>?</kbd> <kbd>Esc</kbd></td><td>Open / close this help</td></tr>
         </table>
-        <p class="muted">3D: drag to orbit, wheel or pinch to zoom, right-drag, shift-drag or two fingers to pan. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol edges redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
+        <p class="muted">3D: drag to orbit, wheel or pinch to zoom, right-drag, shift-drag or two fingers to pan. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). In the 2D view a state is filled with the colour of the pattern piece that leads into it and drawn larger the more symbols it can accept; states the string has passed through get an amber ring. An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol edges redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
         <h2>The machine</h2>
         <p>Your pattern is compiled to the minimal DFA and shown as a Turing machine. Other simulators leave three choices open; this one fixes them:</p>
         <ul>
@@ -2926,6 +2928,7 @@ var TMApp = (function () {
       ['bg', 'panel', 'ink', 'accent', 'hl', 'accept', 'reject', 'muted', 'line'].forEach(k => { col[k] = new T3.Color(cssVar('--' + k)); });
       col.onHl = new T3.Color(cssVar('--on-hl'));
       col.piece = [0, 1, 2, 3, 4, 5].map(i => new T3.Color(cssVar('--p' + i)));
+      col.path = new T3.Color(cssVar('--path'));
       col.sinkc = col.ink.clone().lerp(col.bg, 0.55); col.cell = col.panel.clone().lerp(col.ink, 0.1);
       col.css = { bg: cssVar('--bg'), ink: cssVar('--ink'), panel: cssVar('--panel'), reject: cssVar('--reject'), accent: cssVar('--accent') };
       scene.background = col.bg; scene.fog.color = col.bg;
@@ -3197,7 +3200,7 @@ var TMApp = (function () {
             V.group.add(eo.glow);
           }
           eo.glow.visible = true;
-          eo.glow.material.color.copy(app.selSet.has(id) ? eo.base : col.hl); // selected: its own colour; path: highlighter
+          eo.glow.material.color.copy(app.selSet.has(id) ? eo.base : col.path); // selected: its own colour; path: highlighter
         });
         lit = want;
         if (lastFired !== null && lastFired !== fired && edgeObjs[lastFired]) { edgeObjs[lastFired].mat.color.copy(edgeObjs[lastFired].base); edgeObjs[lastFired].mat.emissive.setRGB(0, 0, 0); }
@@ -3271,12 +3274,12 @@ var TMApp = (function () {
     let root = null, P = [], particle = null, faildash = null, box = null;
     function apply() { if (root) root.setAttribute('transform', 'translate(' + W.tf.x + ',' + W.tf.y + ') scale(' + W.tf.k + ')'); }
     function unit(x, y) { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; }
-    let loopDir = [];
+    let loopDir = [], Rr = [];
     const widthOf = e => 1.5 + 1.45 * Math.log2(e.count); // arrow width grows with the number of symbols it accepts
     const fitText = (s, max) => s.length <= max ? s : s.slice(0, Math.max(2, max - 1)).replace(/[, ]+$/, '') + '…';
     function edgeGeom(e) { // e is a drawn edge; e.k of e.n when symbols are drawn individually
       const m = app.machine, a = P[e.from], b = P[e.to], dense = e.n > 1, w = widthOf(e), hl = 7 + w * 1.3, hw = 3 + w * 0.9;
-      const rim = s => RAD + (m.accept[s] ? 5.5 : 0) + 1.5;
+      const rim = s => Rr[s] + (m.accept[s] ? 5.5 : 0) + 2;
       if (e.loop) { // a circle that leaves the state and comes back to it, ending in an arrowhead on the rim
         const th = dense ? -Math.PI / 2 + 2 * Math.PI * e.k / e.n : loopDir[e.from], r = (dense ? 10 : 13) + w, Rs = rim(e.from), D = Rs + r * 0.55;
         const cx = a.x + D * Math.cos(th), cy = a.y + D * Math.sin(th), beta = th + Math.PI;
@@ -3286,14 +3289,15 @@ var TMApp = (function () {
           tri: tri(B[0], B[1], u, hl, hw), lx: cx + (r + w / 2 + 11) * Math.cos(th), ly: cy + (r + w / 2 + 11) * Math.sin(th), w: w, label: fitText(e.label, 20) };
       }
       const vx = b.x - a.x, vy = b.y - a.y, len = Math.hypot(vx, vy) || 1, nx = vy / len, ny = -vx / len;
-      const bow = app.bows[e.eid] * len + (dense ? (e.k - (e.n - 1) / 2) * 2 * Math.min(16, 150 / e.n) : 0); // parallel edges fan out
+      const bow = (app.bows[e.eid] || (dense ? 0 : 0.07)) * len + (dense ?  // every edge gets a gentle curve
+        (e.k - (e.n - 1) / 2) * 2 * Math.min(16, 150 / e.n) : 0); // parallel edges fan out
       const cx = (a.x + b.x) / 2 + nx * bow, cy = (a.y + b.y) / 2 + ny * bow;
       const sa = unit(cx - a.x, cy - a.y), eb = unit(cx - b.x, cy - b.y), endR = rim(e.to);
-      const p0 = [a.x + sa[0] * RAD, a.y + sa[1] * RAD], tipx = b.x + eb[0] * endR, tipy = b.y + eb[1] * endR, bx = tipx + eb[0] * hl, by = tipy + eb[1] * hl;
+      const p0 = [a.x + sa[0] * Rr[e.from], a.y + sa[1] * Rr[e.from]], tipx = b.x + eb[0] * endR, tipy = b.y + eb[1] * endR, bx = tipx + eb[0] * hl, by = tipy + eb[1] * hl;
       const t = dense ? [0.5, 0.36, 0.64, 0.43, 0.57][e.k % 5] : 0.5, u1 = 1 - t, lo = dense ? 0 : w / 2 + 10;
       return { d: 'M ' + p0[0].toFixed(1) + ' ' + p0[1].toFixed(1) + ' Q ' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1),
         tri: tri(tipx, tipy, [-eb[0], -eb[1]], hl, hw), lx: u1 * u1 * p0[0] + 2 * u1 * t * cx + t * t * bx + nx * lo, ly: u1 * u1 * p0[1] + 2 * u1 * t * cy + t * t * by + ny * lo,
-        w: w, label: fitText(e.label, Math.floor((len - 2 * RAD - hl - 12) / 7.7)) };
+        w: w, label: fitText(e.label, Math.floor((len - Rr[e.from] - Rr[e.to] - hl - 12) / 7.7)) };
     }
     function tri(tx, ty, u, hl, hw) { // arrowhead with its tip at (tx,ty), pointing along u
       const bx = tx - u[0] * hl, by = ty - u[1] * hl;
@@ -3319,6 +3323,8 @@ var TMApp = (function () {
       if (!m) return;
       root = sv('g'); svg.append(root);
       P = L.pos.map(p => ({ x: p.x * S * 1.15, y: -p.y * S }));
+      // bubble size: the more symbols a state can accept, the bigger it is drawn
+      Rr = P.map((p, s) => s === m.sink ? 15 : 17 + 1.6 * Math.log2(1 + m.edges.reduce((n, e) => n + (e.from === s && !e.toSink ? e.classes.reduce((k, ci) => k + m.classes[ci].syms.length, 0) : 0), 0)));
       chooseLoopDirs();
       const gE = sv('g'), gS = sv('g');
       app.dedges.slice().sort((x, y) => y.count - x.count).forEach(e => { // widest first, so thin edges stay visible on top
@@ -3332,12 +3338,17 @@ var TMApp = (function () {
       faildash = sv('path', { class: 'faildash' });
       const a0 = P[m.start];
       const arrow = sv('g', { class: 'startarrow' });
-      arrow.append(sv('line', { x1: a0.x - RAD - 34, y1: a0.y, x2: a0.x - RAD - 10, y2: a0.y }), sv('polygon', { points: tri(a0.x - RAD - 2, a0.y, [1, 0], 9, 4.5) }));
+      arrow.append(sv('line', { x1: a0.x - Rr[m.start] - 36, y1: a0.y, x2: a0.x - Rr[m.start] - 12, y2: a0.y }), sv('polygon', { points: tri(a0.x - Rr[m.start] - 3, a0.y, [1, 0], 10, 5) }));
       for (let s = 0; s < m.n; s++) {
         const g = sv('g', { class: 'state' + (s === m.sink ? ' sink' : ''), 'data-state': s, transform: 'translate(' + P[s].x.toFixed(1) + ',' + P[s].y.toFixed(1) + ')' });
-        if (m.accept[s]) g.append(sv('circle', { class: 'ring', r: RAD + 5 }));
+        const rr = Rr[s], inc = new Set();
+        app.dedges.forEach(e => { if (e.to === s && !e.loop) inc.add(e.color); });
+        if (!inc.size) app.dedges.forEach(e => { if (e.to === s) inc.add(e.color); });
+        const one = inc.size === 1 ? inc.values().next().value : -1; // a state takes the colour of the pattern piece that leads into it
+        g.style.setProperty('--sc', one >= 0 ? 'var(--p' + one + ')' : s === m.start ? 'var(--accent)' : 'var(--muted)');
+        if (m.accept[s]) g.append(sv('circle', { class: 'ring', r: rr + 5 }));
         const t = sv('text'); t.textContent = m.names[s];
-        g.append(sv('circle', { class: 'body', r: RAD }), t, sv('circle', { class: 'bp', r: 5.5, cx: RAD * 0.78, cy: -RAD * 0.78 }));
+        g.append(sv('circle', { class: 'vring', r: rr + (m.accept[s] ? 10.5 : 5.5) }), sv('circle', { class: 'body', r: rr }), t, sv('circle', { class: 'bp', r: 5.5, cx: rr * 0.78, cy: -rr * 0.78 }));
         gS.append(g); W.states.push(g);
       }
       particle = sv('circle', { class: 'particle', r: 6 });
