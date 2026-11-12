@@ -46,7 +46,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Turing Machine Regex Simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,8 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); display: flex; flex-direction: column; overflow: hidden; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); display: flex; flex-direction: column; overflow: hidden; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+html, body { height: 100dvh; }
 h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -.01em; white-space: nowrap; }
 h1 small { font: 500 14px var(--mono); color: var(--muted); margin-left: 8px; }
 h2 { font-size: 14px; font-weight: 600; margin: 0; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
@@ -301,16 +302,74 @@ table.delta tr.failrow th { color: var(--reject); }
 #testOut:empty { display: none; }
 .selftest { opacity: .55; font-size: 14px; } .selftest:hover, .selftest:focus-visible { opacity: 1; }
 
-@media (max-width: 900px) {
-  body { overflow: auto; height: auto; }
-  main { display: flex; flex-direction: column-reverse; }
-  #stage { height: 58vh; min-height: 380px; flex: none; position: sticky; top: 0; z-index: 4; border-bottom: 1px solid var(--line); }
-  .float.tr { top: 50px; left: 12px; right: 12px; max-width: none; justify-content: flex-start; }
-  .float .btn { padding: 4px 9px; }
-  #stage.v-table #tablePane { padding-top: 96px; }
-  #left { overflow: visible; border-right: 0; }
-  .cols { grid-template-columns: 1fr; }
+/* ---- phones and portrait tablets: diagram pinned on top, panels scroll under it, transport bar at the thumb ---- */
+@media (max-width: 900px) and (orientation: portrait), (max-width: 640px) {
+  html, body { height: auto; min-height: 100%; }
+  body { overflow: visible; display: block; padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
+  header.top { padding: 8px 12px; gap: 8px; }
+  header.top .spacer { display: none; }
+  h1 { font-size: 16px; flex: 1 1 calc(100% - 100px); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   h1 small { display: none; }
+  #themeBtn, #helpBtn { order: 1; }
+  .preset { order: 2; flex: 1 1 130px; min-width: 130px; font-size: 0; gap: 0; }
+  .preset select.btn { font-size: 14px; width: 100%; max-width: none; min-width: 0; }
+  header.top .menu, #promptBtn { order: 3; }
+  .btn, .seg button { min-height: 38px; }
+  main { display: flex; flex-direction: column-reverse; }
+  #stage { height: 50vh; height: 50svh; min-height: 300px; max-height: 620px; flex: none; position: sticky; top: 0; z-index: 4; border-bottom: 1px solid var(--line); box-shadow: 0 4px 10px rgba(0,0,0,.08); }
+  .float.tl { top: 8px; left: 8px; }
+  .float.tr { top: auto; bottom: 8px; left: 8px; right: 8px; max-width: none; justify-content: flex-start; }
+  #stage.v-2d .float.tr { bottom: 66px; }
+  .float .btn { padding: 4px 9px; min-height: 34px; font-size: 13px; }
+  .float .seg button { min-height: 36px; }
+  .float.bl { display: none; }
+  #stage.v-table #tablePane { padding-top: 54px; }
+  #stage:not(.v-3d) #stageBadge { right: 8px; top: 8px !important; bottom: auto; max-width: calc(100% - 176px); font-size: 13px; padding: 5px 9px; }
+  #stageBadge b { font-size: 18px; }
+  #left { overflow: visible; border-right: 0; padding: 10px; gap: 10px; }
+  .card { padding: 10px 12px; }
+  .pbox { font-size: 16px; }
+  #sigmaRow input, textarea#batch { font-size: 16px; }
+  .hint { font-size: 13px; }
+  /* transport bar: the same buttons, fixed to the bottom edge so the diagram and the controls share one screen */
+  .controls { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; margin: 0; flex-wrap: nowrap; gap: 6px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); background: var(--panel); border-top: 1px solid var(--line); box-shadow: 0 -4px 14px rgba(0,0,0,.12); }
+  .controls .btn { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 0 4px; font-size: 13px; }
+  /* while typing, give the on-screen keyboard the room: the diagram scrolls away and the bar returns to its card */
+  body:has(#left input:not([type=range]):focus, #left textarea:focus) #stage { position: relative; }
+  body:has(#left input:not([type=range]):focus, #left textarea:focus) .controls { position: static; padding: 0; margin-top: 10px; border: 0; box-shadow: none; flex-wrap: wrap; background: none; }
+  .overlay { padding: 8px; }
+  .sheet { padding: 14px 14px 18px; }
+  .sheet pre { white-space: pre-wrap; word-break: break-word; }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .menu-list { right: auto; left: 0; }
+}
+@media (max-width: 640px) {
+  #pinLabel { display: none !important; }
+  #stage.pin:not(.v-table) #tablePane { display: none; }
+}
+@media (max-width: 380px) {
+  .controls .btn { font-size: 12px; padding: 0 2px; }
+  .float .btn { padding: 4px 7px; }
+}
+/* ---- phones held sideways: keep the two columns, shrink the chrome ---- */
+@media (orientation: landscape) and (min-width: 641px) and (max-height: 520px) {
+  header.top { padding: 5px 10px; gap: 8px; flex-wrap: nowrap; }
+  h1 { font-size: 15px; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  h1 small { display: none; }
+  select.btn { max-width: 190px; }
+  .btn { padding: 5px 9px; }
+  main { grid-template-columns: minmax(270px, 38%) 1fr; }
+  #left { padding: 8px; gap: 8px; }
+  .card { padding: 9px 11px; }
+  .pbox { font-size: 16px; }
+  #pinLabel { display: none !important; }
+  #stage.pin:not(.v-table) #tablePane { display: none; }
+  .float.tl { top: 6px; left: 8px; } .float.tr { top: 6px; right: 8px; max-width: calc(100% - 190px); }
+  .float .btn, .float .seg button { padding: 4px 8px; font-size: 13px; }
+  .float.bl { display: none; }
+  #tapeBar { height: 50px; } #tapeTrack { top: 12px; }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .overlay { padding: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -861,6 +920,10 @@ FOLLOW-UP REQUESTS (given in conversation after the first build, in order)
    Developer work: 7. Capture parts of a date, 8. Error lines in a log, 9. Failed requests in an access log, 10. Stack trace locations, 11. Leak summary from Valgrind, 12. Memory addresses, 13. IP addresses, 14. Version numbers, 15. Git commit hashes, 16. Environment variables in a script, 17. Quoted strings, 18. Function names in a file, 19. TODO comments with an owner, 20. Reorder names with a replacement.
 
 6. Add a button for the prompt used to create the application (the full package). It should pop up in a modal and users should be able to copy it to the clipboard.
+
+7. Take styling inspiration from the reference flow diagrams: filled coloured bubbles, amber rings and lines along the path taken, curved edges, dashed grey inactive nodes.
+
+8. Make it mobile ready, so everything can be seen on a phone: the diagram and tape stay pinned at the top, the panels scroll underneath, Step / Play / Undo sit in a bar at the bottom edge, and long machines wrap into more rows on a narrow screen.
 
 
 ==========================================================================
@@ -1840,7 +1903,7 @@ var TM = (function () {
   }
 
   // ---------- deterministic layout (shared by 3D and 2D) ----------
-  function layout(m) {
+  function layout(m, maxPerRow) {
     var n = m.live, rank = new Array(n).fill(-1), queue = [m.start], s, k;
     rank[m.start] = 0;
     for (var h = 0; h < queue.length; h++) m.delta[queue[h]].forEach(function (to) { if (to !== m.sink && rank[to] < 0) { rank[to] = rank[queue[h]] + 1; queue.push(to); } });
@@ -1859,7 +1922,7 @@ var TM = (function () {
       ranks[k].sort(function (a, b) { return (bary[a] - bary[b]) || (a - b); });
       ranks[k].forEach(function (x, j) { slot[x] = j - (ranks[k].length - 1) / 2; });
     }
-    var R = maxRank + 1, perRow = R <= 8 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows = Math.ceil(R / perRow);
+    var R = maxRank + 1, perRow = R <= 8 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows0 = (maxPerRow && perRow > maxPerRow ? (perRow = maxPerRow) : 0), rows = Math.ceil(R / perRow);
     var dx = n <= 8 ? 2.1 : 1.75, dy = 1.7, dz = rows > 1 ? 0.12 : 0.36;
     var rowTop = [0];
     for (var r = 0; r < rows; r++) {
@@ -2438,12 +2501,21 @@ var TMApp = (function () {
   }
   function errText(e) { return e.pos >= 0 ? 'position ' + e.pos + ': ' + e.message : e.message; }
 
+  /* On a narrow (phone) screen the state chain wraps after four columns so the bubbles stay readable. */
+  const narrowMQ = window.matchMedia ? matchMedia('(max-width: 640px)') : null;
+  function rowCap() { if (!(narrowMQ && narrowMQ.matches) || !app.machine) return 0; const n = app.machine.live; return Math.max(4, Math.ceil(Math.sqrt(n * 1.3))); }
+  function relayout() {
+    if (!app.machine) return;
+    app.layout = TM.layout(app.machine, rowCap());
+    app.selEdge = -1; hideTip(true); computeBows(); computeDraw();
+    view3d.build(); view2d.userMoved = false; view2d.build(); syncAll();
+  }
   function recompile() {
     const pat = $('pattern').value, opts = getOpts();
     const c = opts.error ? { ok: false, error: { message: opts.error, pos: -1 } } : TM.compile(pat, opts);
     app.compiled = c; TM.last = c;
     app.machine = c.ok ? c.machine : null;
-    app.layout = c.ok ? TM.layout(c.machine) : null;
+    app.layout = c.ok ? TM.layout(c.machine, rowCap()) : null;
     app.breakpoints.clear(); app.selTok = null; app.pinned = -1; app.selEdge = -1; app.selSet = new Set(); hideTip(true);
     if (c.ok) { computeBows(); computeDraw(); }
     showPattern(); renderPanels(); updateCompare();
@@ -3363,8 +3435,8 @@ var TMApp = (function () {
       W.userMoved = false;
       const w = svg.clientWidth, hh = svg.clientHeight;
       if (!box || !w || !hh) return;
-      const top = 52, k = Math.min(w / (box.x1 - box.x0), (hh - top) / (box.y1 - box.y0), 1.3);
-      W.tf = { k: k, x: w / 2 - k * (box.x0 + box.x1) / 2, y: top + (hh - top) / 2 - k * (box.y0 + box.y1) / 2 };
+      const fl = document.querySelector('.float.tr'), bot = fl && fl.offsetHeight && fl.offsetLeft < 40 && fl.offsetTop > hh / 2 ? hh - fl.offsetTop - 14 : 0, top = bot ? 34 : 52, k = Math.min(w / (box.x1 - box.x0), (hh - top - bot) / (box.y1 - box.y0), 1.3);
+      W.tf = { k: k, x: w / 2 - k * (box.x0 + box.x1) / 2, y: top + (hh - top - bot) / 2 - k * (box.y0 + box.y1) / 2 };
       apply();
     };
     W.refit = function () { if (!W.userMoved) W.fit(); };
@@ -3654,6 +3726,7 @@ var TMApp = (function () {
     });
     if (window.ResizeObserver) new ResizeObserver(() => { view3d.resize(); view2d.refit(); syncTapeStrip(); }).observe($('viewport'));
     window.addEventListener('resize', () => { view3d.resize(); view2d.refit(); syncTapeStrip(); });
+    if (narrowMQ) { if (narrowMQ.addEventListener) narrowMQ.addEventListener('change', relayout); else if (narrowMQ.addListener) narrowMQ.addListener(relayout); }
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => view3d.applyTheme());
   }
 
