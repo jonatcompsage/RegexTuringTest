@@ -2,9 +2,8 @@
 <!--
   TURING MACHINE REGEX SIMULATOR — single-file teaching tool (companion to the Regex Explorer)
   ==========================================================================================
-  Open this file with a double-click (file://) or host it anywhere. The only network requests
-  are Three.js r160 (one UMD script from cdnjs) and the IBM Plex fonts from Google Fonts.
-  Without a network the 2D and Table views still work; only the 3D view needs Three.js.
+  Open this file with a double-click (file://) or host it anywhere. The only network request
+  is for the IBM Plex fonts from Google Fonts; without a network everything still works.
 
   HOW THE PIPELINE WORKS (each stage is kept on window.TM.last for the console)
     1. parse      TM.parse(pattern, opts)  hand-written recursive descent -> AST with source spans,
@@ -37,9 +36,10 @@
   KEYBOARD
     Enter  Load the test string         →  Step            ←  Undo Step
     Space  Play / Pause                 R  Reset           ?  Help          Esc  close overlays
-    3D: drag to orbit, wheel or pinch to zoom, right-drag / shift-drag / two fingers to pan.
+    Diagram: drag to pan, wheel or pinch to zoom. Whole graph fits the machine in view; Follow stays
+    zoomed in on the head's state. Fold returns draws fall-back arrows as short stubs (tap one to see them).
     Click a state (any view) to toggle a breakpoint. Highlight keeps the path followed so far lit;
-    Per-symbol edges draws one edge per individual symbol instead of one per input class.
+    Per-symbol draws one edge per individual symbol instead of one per input class.
 
   DELIBERATE DEVIATIONS FROM THE BUILD PROMPT are listed in the ? overlay, section “Notes”.
 -->
@@ -102,11 +102,6 @@ select.btn { padding-right: 8px; max-width: 290px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--panel); }
 .seg button { border: 0; background: transparent; padding: 5px 11px; font-size: 14px; font-weight: 500; cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line); }
-.menu { position: relative; }
-.menu-list { position: absolute; right: 0; top: calc(100% + 6px); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 4px; z-index: 30; min-width: 220px; display: flex; flex-direction: column; }
-.menu-list[hidden] { display: none; }
-.menu-list button { border: 0; background: transparent; text-align: left; padding: 8px 10px; border-radius: 5px; cursor: pointer; font-size: 14px; }
-.menu-list button:hover { background: var(--soft); color: var(--accent); }
 
 main { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(350px, 30%) 1fr; }
 #left { overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 12px; border-right: 1px solid var(--line); }
@@ -195,9 +190,7 @@ textarea#batch { width: 100%; min-height: 96px; resize: vertical; font: 14px/1.5
 
 #stage { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); }
 #viewport { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
-#view3d, #view2d { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
-#view3d canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
-#view3d canvas:active { cursor: grabbing; }
+#view2d { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
 #view2d { cursor: grab; user-select: none; }
 #placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; font-size: 20px; font-weight: 500; color: var(--muted); opacity: .75; pointer-events: none; }
 .float { position: absolute; z-index: 5; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
@@ -210,7 +203,7 @@ label.chk input { accent-color: var(--accent); margin: 0; }
 #stage.pin #tablePane { display: block; }
 #stage.v-table #tablePane { display: block; flex: 1 1 0; border-top: 0; padding-top: 54px; background: var(--bg); }
 #stage.v-table #viewport { display: none; }
-#stage.v-table .float.tr, #stage.v-2d .cam3d { display: none; }
+#stage.v-table .float.tr { display: none; }
 table.delta { border-collapse: separate; border-spacing: 0; font: 14px var(--mono); margin: 0 auto 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
 table.delta th, table.delta td { padding: 5px 12px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); text-align: center; white-space: nowrap; transition: background-color .2s; }
 table.delta thead th { position: sticky; top: 0; background: var(--soft); z-index: 2; font-weight: 600; }
@@ -246,7 +239,7 @@ table.delta tr.failrow th { color: var(--reject); }
 #stageBadge.accept { display: block; color: var(--accept); border-color: var(--accept); background: color-mix(in srgb, var(--accept) 14%, var(--panel)); }
 #stageBadge.reject { display: block; color: var(--reject); border-color: var(--reject); background: color-mix(in srgb, var(--reject) 12%, var(--panel)); }
 #stageBadge.notrun { display: block; color: var(--muted); border-color: var(--muted); background: var(--panel); }
-#stage:not(.v-3d) #stageBadge { left: auto !important; top: auto !important; right: 12px; bottom: 68px; transform: none !important; }
+#stageBadge { left: auto; top: auto; right: 12px; bottom: 68px; }
 #tooltip { position: absolute; z-index: 8; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 7px 10px; font-size: 14px; max-width: 300px; pointer-events: none; display: none; }
 #tooltip.pinned { border-color: var(--accent); }
 #tooltip b { font-family: var(--mono); }
@@ -286,6 +279,16 @@ table.delta tr.failrow th { color: var(--reject); }
 #view2d .faildash { fill: none; stroke: var(--reject); stroke-width: 2.5; stroke-dasharray: 7 5; display: none; }
 #view2d .particle { fill: var(--hl); stroke: var(--ink); stroke-width: 1; display: none; }
 #stage.nohl #view2d .edge text { display: none; }
+#view2d .edge.fold { display: none; }
+#view2d .edge.fold.trail, #view2d .edge.fold.fired, #view2d .edge.fold.sel, #view2d .edge.fold.peek { display: inline; }
+#view2d .edge.fold.peek:not(.trail):not(.fired) .line, #view2d .edge.fold.peek:not(.trail):not(.fired) polygon { opacity: .6; }
+#view2d .stub { cursor: pointer; }
+#view2d .stub rect { fill: var(--panel); stroke: var(--line); stroke-width: 1; }
+#view2d .stub line { stroke: var(--muted); stroke-width: 1.6; stroke-dasharray: 3 2.5; }
+#view2d .stub polygon { fill: var(--muted); }
+#view2d .stub text { font-size: 11px; font-weight: 500; fill: var(--muted); }
+#view2d .stub:hover rect, #view2d .stub.on rect { stroke: var(--accent); }
+#view2d .stub.on rect { fill: var(--accent); } #view2d .stub.on text { fill: var(--on-accent); }
 
 .overlay { position: fixed; inset: 0; background: rgba(10,14,20,.55); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow: auto; }
 .overlay[hidden] { display: none; }
@@ -313,18 +316,20 @@ table.delta tr.failrow th { color: var(--reject); }
   #themeBtn, #helpBtn { order: 1; }
   .preset { order: 2; flex: 1 1 130px; min-width: 130px; font-size: 0; gap: 0; }
   .preset select.btn { font-size: 14px; width: 100%; max-width: none; min-width: 0; }
-  header.top .menu, #promptBtn { order: 3; }
+  #promptBtn { order: 3; }
   .btn, .seg button { min-height: 38px; }
   main { display: flex; flex-direction: column-reverse; }
   #stage { height: 50vh; height: 50svh; min-height: 300px; max-height: 620px; flex: none; position: sticky; top: 0; z-index: 4; border-bottom: 1px solid var(--line); box-shadow: 0 4px 10px rgba(0,0,0,.08); }
   .float.tl { top: 8px; left: 8px; }
-  .float.tr { top: auto; bottom: 8px; left: 8px; right: 8px; max-width: none; justify-content: flex-start; }
-  #stage.v-2d .float.tr { bottom: 66px; }
+  .float.tr { top: 8px; left: 112px; right: 0; max-width: none; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-right: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .float.tr::-webkit-scrollbar { display: none; }
+  .float.tr .btn { flex: none; min-height: 38px; }
   .float .btn { padding: 4px 9px; min-height: 34px; font-size: 13px; }
   .float .seg button { min-height: 36px; }
   .float.bl { display: none; }
   #stage.v-table #tablePane { padding-top: 54px; }
-  #stage:not(.v-3d) #stageBadge { right: 8px; top: 8px !important; bottom: auto; max-width: calc(100% - 176px); font-size: 13px; padding: 5px 9px; }
+  #stageBadge { right: 8px; bottom: 64px; max-width: calc(100% - 16px); font-size: 13px; padding: 5px 9px; }
+  #stage.v-table #stageBadge { bottom: 64px; }
   #stageBadge b { font-size: 18px; }
   #left { overflow: visible; border-right: 0; padding: 10px; gap: 10px; }
   .card { padding: 10px 12px; }
@@ -341,7 +346,6 @@ table.delta tr.failrow th { color: var(--reject); }
   .sheet { padding: 14px 14px 18px; }
   .sheet pre { white-space: pre-wrap; word-break: break-word; }
   .cols { grid-template-columns: minmax(0, 1fr); }
-  .menu-list { right: auto; left: 0; }
 }
 @media (max-width: 640px) {
   #pinLabel { display: none !important; }
@@ -381,13 +385,6 @@ table.delta tr.failrow th { color: var(--reject); }
   <label class="preset" for="preset">Preset
     <select id="preset" class="btn" aria-label="Load a preset pattern"></select>
   </label>
-  <div class="menu">
-    <button id="exportBtn" class="btn" aria-haspopup="true" aria-expanded="false" aria-label="Export the machine">Export ▾</button>
-    <div class="menu-list" id="exportList" hidden role="menu">
-      <button role="menuitem" data-export="yaml" aria-label="Download turingmachine.io YAML">turingmachine.io YAML</button>
-      <button role="menuitem" data-export="morphett" aria-label="Download morphett 5-tuples">morphett 5-tuples</button>
-    </div>
-  </div>
   <button id="promptBtn" class="btn" aria-haspopup="dialog" aria-label="Show the prompt used to build this application">Prompt</button>
   <button id="themeBtn" class="btn icon" aria-label="Switch between light and dark mode" title="Light / dark">◐</button>
   <button id="helpBtn" class="btn icon" aria-label="Help: shortcuts and grammar" title="Help">?</button>
@@ -487,7 +484,6 @@ table.delta tr.failrow th { color: var(--reject); }
 
   <section id="stage" class="v-2d" aria-label="Machine view">
     <div id="viewport">
-      <div id="view3d" aria-label="3D view of the machine. Drag to orbit, wheel to zoom, shift-drag to pan." style="display:none"></div>
       <svg id="view2d" role="img" aria-label="2D state diagram"></svg>
       <div id="placeholder" hidden>Fix the pattern to build the machine</div>
       <div id="tooltip" role="tooltip"></div>
@@ -498,18 +494,15 @@ table.delta tr.failrow th { color: var(--reject); }
     <div class="float tl">
       <div class="seg" role="radiogroup" aria-label="View mode">
         <button role="radio" data-view="2d" aria-checked="true" aria-label="2D diagram view">2D</button>
-        <button role="radio" data-view="3d" aria-checked="false" aria-label="3D view">3D</button>
         <button role="radio" data-view="table" aria-checked="false" aria-label="Transition table view">Table</button>
       </div>
       <label class="chk" id="pinLabel"><input type="checkbox" id="pinTable" aria-label="Pin the table under the diagram"> Pin table</label>
     </div>
     <div class="float tr">
-      <button class="btn cam3d" data-cam="front" aria-label="Front camera view">Front</button>
-      <button class="btn cam3d" data-cam="top" aria-label="Top camera view">Top</button>
-      <button class="btn cam3d" data-cam="side" aria-label="Side camera view">Side</button>
-      <button class="btn cam3d" data-cam="iso" aria-label="Isometric camera view">Isometric</button>
-      <button class="btn" data-cam="reset" aria-label="Reset the view">Reset</button>
-      <button class="btn" id="denseBtn" aria-pressed="false" aria-label="Per-symbol edges: draw one edge for every individual symbol instead of one per input class" title="Draw one edge per individual symbol (denser graph)">Per-symbol edges</button>
+      <button class="btn" data-cam="reset" aria-label="Whole graph: fit the entire machine in view" title="Fit the entire machine in view">Whole graph</button>
+      <button class="btn" id="followBtn" aria-pressed="false" hidden aria-label="Follow: stay zoomed in and keep the current state in view" title="Stay zoomed in and keep the current state in view">Follow</button>
+      <button class="btn" id="denseBtn" aria-pressed="false" aria-label="Per-symbol edges: draw one edge for every individual symbol instead of one per input class" title="Draw one edge per individual symbol (denser graph)">Per-symbol</button>
+      <button class="btn" id="foldBtn" aria-pressed="false" hidden aria-label="Fold returns: draw arrows that fall back to an earlier state as short stubs" title="Draw arrows that fall back to an earlier state as short stubs">Fold returns</button>
       <button class="btn" id="hlBtn" aria-pressed="true" aria-label="Highlight: show or hide glow and labels">Highlight</button>
     </div>
     <div id="stageBadge"></div>
@@ -530,7 +523,7 @@ table.delta tr.failrow th { color: var(--reject); }
           <tr><td><kbd>R</kbd></td><td>Reset</td></tr>
           <tr><td><kbd>?</kbd> <kbd>Esc</kbd></td><td>Open / close this help</td></tr>
         </table>
-        <p class="muted">3D: drag to orbit, wheel or pinch to zoom, right-drag, shift-drag or two fingers to pan. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). In the 2D view a state is filled with the colour of the pattern piece that leads into it and drawn larger the more symbols it can accept; states the string has passed through get an amber ring. An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol edges redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
+        <p class="muted">Diagram: drag to pan, wheel or pinch to zoom. <b>Whole graph</b> fits the entire machine in view. <b>Follow</b> (switched on by itself when the machine is too big to read at full size) stays zoomed in and keeps the head’s state in view as the string moves. <b>Fold returns</b> (switched on by itself for busy machines) draws every arrow that falls back to an earlier state as a short stub such as “↩ q0” beside its state; a folded arrow is drawn in full while the string travels it, and tapping a stub shows that state’s folded arrows. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). In the 2D view a state is filled with the colour of the pattern piece that leads into it and drawn larger the more symbols it can accept; states the string has passed through get an amber ring. An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
         <h2>The machine</h2>
         <p>Your pattern is compiled to the minimal DFA and shown as a Turing machine. Other simulators leave three choices open; this one fixes them:</p>
         <ul>
@@ -923,7 +916,11 @@ FOLLOW-UP REQUESTS (given in conversation after the first build, in order)
 
 7. Take styling inspiration from the reference flow diagrams: filled coloured bubbles, amber rings and lines along the path taken, curved edges, dashed grey inactive nodes.
 
-8. Make it mobile ready, so everything can be seen on a phone: the diagram and tape stay pinned at the top, the panels scroll underneath, Step / Play / Undo sit in a bar at the bottom edge, and long machines wrap into more rows on a narrow screen.
+8. Make it mobile ready, so everything can be seen on a phone: the diagram and tape stay pinned at the top, the panels scroll underneath, Step / Play / Undo sit in a bar at the bottom edge.
+
+9. The test string needs to be above the pattern so we can see what we are solving for.
+
+10. No need for the 3D render. No need for export. The TODO comments preset and others are not readable: come up with a rendering that makes them readable. (Result: the 3D view, Three.js and the export menu were removed; arrows that fall back to an earlier state fold into short “↩ q0” stubs; Follow keeps a readable zoom centred on the head's state.)
 
 
 ==========================================================================
@@ -936,7 +933,6 @@ CORRECTIONS MADE DURING THE BUILD (where the prompt above was wrong)
 • (a+)+ has 2 live states, not 1, because it cannot accept ε.
 • The alphabet is printable ASCII plus tab and newline, so that \t, \n and \s can be tested.
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" crossorigin="anonymous"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -1829,50 +1825,6 @@ var TM = (function () {
     }
     return lines;
   }
-  var MORPHETT_BAD = [' ', '_', '*', ';', '\t', '\n'];
-  function exportMorphett(m, pattern, input, breakpoints) {
-    var out = ['; Turing Machine Regex Simulator: export in morphett.info/turing 5-tuple format',
-      '; pattern: ' + pattern, '; initial input: ' + input,
-      '; <state> <read> <write> <direction> <next>. Read-only machine: write always equals read.',
-      '; Halting anywhere except halt-accept means reject.', '0 * * * ' + m.names[m.start]], skipped = new Set();
-    for (var s = 0; s < m.live; s++) {
-      for (var a = 0; a < m.sigma.size; a++) {
-        var to = m.trans[s][a], ch = m.sigma.chars[a];
-        if (to === m.sink) continue;
-        if (MORPHETT_BAD.indexOf(ch) >= 0) { skipped.add(vis(ch)); continue; }
-        out.push(m.names[s] + ' ' + ch + ' ' + ch + ' r ' + m.names[to] + (breakpoints && breakpoints.has(to) ? ' !' : ''));
-      }
-      out.push(m.names[s] + ' _ _ * ' + (m.accept[s] ? 'halt-accept' : 'halt-reject'));
-      out.push(m.names[s] + ' * * * halt-reject');
-    }
-    if (skipped.size) out.splice(5, 0, '; NOTE: transitions on ' + Array.from(skipped).join(' ') + ' cannot be written in this format (reserved characters) and were left out.');
-    return out.join('\n') + '\n';
-  }
-  function yq(c) { return "'" + c.replace(/'/g, "''") + "'"; }
-  function exportYAML(m, pattern, input) {
-    var used = new Set(Array.from(input)), s, a;
-    for (s = 0; s < m.live; s++) for (a = 0; a < m.sigma.size; a++) if (m.trans[s][a] !== m.sink) used.add(m.sigma.chars[a]);
-    var blank = [' ', '_', '□', '⊔'].filter(function (b) { return !used.has(b); })[0] || '⊔';
-    var out = ['# Turing Machine Regex Simulator: export for turingmachine.io', '# pattern: ' + pattern,
-      '# Read-only, right-moving machine. Halting in any state other than accept means reject.',
-      'input: ' + yq(input), 'blank: ' + yq(blank), 'start state: ' + m.names[m.start], 'table:'], skipped = false;
-    for (s = 0; s < m.live; s++) {
-      out.push('  ' + m.names[s] + ':');
-      var byTo = new Map();
-      for (a = 0; a < m.sigma.size; a++) {
-        var to = m.trans[s][a], ch = m.sigma.chars[a];
-        if (to === m.sink) continue;
-        if (ch === '\t' || ch === '\n') { skipped = true; continue; }
-        if (!byTo.has(to)) byTo.set(to, []);
-        byTo.get(to).push(ch);
-      }
-      byTo.forEach(function (chs, to) { out.push('    ' + (chs.length === 1 ? yq(chs[0]) : '[' + chs.map(yq).join(',') + ']') + ': {R: ' + m.names[to] + '}'); });
-      if (m.accept[s]) out.push('    ' + yq(blank) + ': {R: accept}');
-    }
-    out.push('  accept:');
-    if (skipped) out.splice(3, 0, '# NOTE: transitions on tab and newline cannot be written here and were left out.');
-    return out.join('\n') + '\n';
-  }
 
   // ---------- equivalence (product automaton, breadth-first) ----------
   function equivalent(m1, m2) {
@@ -1903,7 +1855,7 @@ var TM = (function () {
   }
 
   // ---------- deterministic layout (shared by 3D and 2D) ----------
-  function layout(m, maxPerRow) {
+  function layout(m) {
     var n = m.live, rank = new Array(n).fill(-1), queue = [m.start], s, k;
     rank[m.start] = 0;
     for (var h = 0; h < queue.length; h++) m.delta[queue[h]].forEach(function (to) { if (to !== m.sink && rank[to] < 0) { rank[to] = rank[queue[h]] + 1; queue.push(to); } });
@@ -1922,7 +1874,7 @@ var TM = (function () {
       ranks[k].sort(function (a, b) { return (bary[a] - bary[b]) || (a - b); });
       ranks[k].forEach(function (x, j) { slot[x] = j - (ranks[k].length - 1) / 2; });
     }
-    var R = maxRank + 1, perRow = R <= 8 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows0 = (maxPerRow && perRow > maxPerRow ? (perRow = maxPerRow) : 0), rows = Math.ceil(R / perRow);
+    var R = maxRank + 1, perRow = R <= 8 ? R : Math.ceil(Math.sqrt(R * 2.6)), rows = Math.ceil(R / perRow);
     var dx = n <= 8 ? 2.1 : 1.75, dy = 1.7, dz = rows > 1 ? 0.12 : 0.36;
     var rowTop = [0];
     for (var r = 0; r < rows; r++) {
@@ -2000,7 +1952,7 @@ var TM = (function () {
     parse: parse, toNFA: toNFA, toDFA: toDFA, minimize: minimize, step: step, run: run, compile: compile,
     parseSigmaSpec: parseSigmaSpec, sigmaName: sigmaName, vis: vis, plural: plural, setLabel: setLabel, setMembers: setMembers,
     desugar: desugar, desugarToAst: desugarToAst, printDesugared: printDesugared, breakdown: breakdown, why: why,
-    grammar: grammar, fiveTuple: fiveTuple, tuples: tuples, exportMorphett: exportMorphett, exportYAML: exportYAML,
+    grammar: grammar, fiveTuple: fiveTuple, tuples: tuples,
     equivalent: equivalent, isomorphic: isomorphic, origins: origins, layout: layout, liveClasses: liveClasses, nonTerminal: nonTerminal,
     setCoverage: function (set) { coverage = set; }, last: null
   };
@@ -2151,48 +2103,7 @@ TM.selfTests = async function (ui, log) {
   });
   await breathe();
 
-  // ---------------------------------------------------------------- exports
-  section('Export (checked with offline interpreters of both legacy formats)');
-  function runMorphett(text, input) {
-    var rules = [];
-    text.split('\n').forEach(function (line) { var t = line.split(';')[0].trim().split(/\s+/); if (t.length >= 5) rules.push(t); });
-    var tape = Array.from(input.replace(/ /g, '_')), pos = 0, state = '0', guard = 0;
-    while (state.indexOf('halt') !== 0 && guard++ < 5000) {
-      var sy = tape[pos] === undefined ? '_' : tape[pos];
-      var rule = rules.filter(function (x) { return x[0] === state && x[1] === sy; })[0] || rules.filter(function (x) { return x[0] === state && x[1] === '*'; })[0];
-      if (!rule) return 'halt (no rule)';
-      if (rule[2] !== '*') tape[pos] = rule[2];
-      if (rule[3] === 'r') pos++; else if (rule[3] === 'l') pos--;
-      state = rule[4];
-    }
-    return state;
-  }
-  function runYaml(text) {
-    var input = '', blank = ' ', start = '', table = {}, cur = null, unq = function (s) { return s.slice(1, -1).replace(/''/g, "'"); };
-    text.split('\n').forEach(function (line) {
-      var mm;
-      if (/^#/.test(line) || !line.trim()) return;
-      if ((mm = /^input: (.*)$/.exec(line))) input = unq(mm[1]);
-      else if ((mm = /^blank: (.*)$/.exec(line))) blank = unq(mm[1]);
-      else if ((mm = /^start state: (.*)$/.exec(line))) start = mm[1];
-      else if ((mm = /^ {2}(\S+):$/.exec(line))) { cur = table[mm[1]] = {}; }
-      else if ((mm = /^ {4}(.*): \{R: (\S+)\}$/.exec(line))) (mm[1].match(/'(?:[^']|'')*'/g) || []).forEach(function (k) { cur[unq(k)] = mm[2]; });
-      else if (line !== 'table:') throw new Error('unparsed YAML line: ' + line);
-    });
-    var tape = Array.from(input), pos = 0, state = start;
-    for (;;) { var sy = pos < tape.length ? tape[pos] : blank, nx = table[state] && table[state][sy]; if (!nx) break; state = nx; pos++; }
-    return state === 'accept';
-  }
-  [[SSN, ['219-09-9999', '219-09-999', '219-09-99999', '', 'x219-09-9999']], [HEX, ['#1F5FA8', '#1234', '#abc', '#']], ['b*(ab*ab*)*', ['abab', 'aba', '', 'bb', 'abba']]].forEach(function (t) {
-    var m = M(t[0]), good = true;
-    t[1].forEach(function (s) {
-      if ((runMorphett(TM.exportMorphett(m, t[0], s), s) === 'halt-accept') !== acc(m, s)) good = false;
-      if (runYaml(TM.exportYAML(m, t[0], s)) !== acc(m, s)) good = false;
-    });
-    ok(good, 'morphett and turingmachine.io exports agree with the simulator: ' + t[0]);
-  });
-  ok(runMorphett(TM.exportMorphett(ssn, SSN, '219-09-9999'), '219-09-9999') === 'halt-accept', 'morphett export of SSN halts in halt-accept on 219-09-9999');
-  ok(/^input: '219-09-9999'$/m.test(TM.exportYAML(ssn, SSN, '219-09-9999')), 'YAML export carries the test string on its input: line');
+  section('Generated table');
   ok(TM.tuples(ssn, false).indexOf('q0 0–9 0–9 r q1') >= 0 && TM.tuples(ssn, true).indexOf('q0 7 7 r q1') >= 0, 'generated table lists tuples collapsed and expanded');
 
   // ---------------------------------------------------------------- grammar coverage tables
@@ -2297,7 +2208,7 @@ TM.selfTests = async function (ui, log) {
     section('Simulator UI: trace, views, rendering, camera, batch, breakpoints, failure pictures');
     var el = function (id) { return document.getElementById(id); };
     var saved = { notation: ui.app.notation, sigma: el('sigma').value, pattern: el('pattern').value, compare: el('compare').value, string: ui.app.sim.input, view: ui.app.view, expand: ui.app.expand,
-      speed: ui.app.speed, cam: ui.view3d.ok ? { theta: ui.view3d.cam.theta, phi: ui.view3d.cam.phi, radius: ui.view3d.cam.radius, target: ui.view3d.cam.target.clone(), moved: ui.view3d.cam.userMoved } : null };
+      speed: ui.app.speed };
     try {
       el('compare').value = '';
       ui.setPattern(SSN); ui.setString('219-09-9999');
@@ -2308,16 +2219,14 @@ TM.selfTests = async function (ui, log) {
       ok(ui.app.sim.pos === 0 && d0.cur === 0 && d0.head === 0 && ui.traceRows().length === 0, 'Trace: 11 × Undo Step returns to q0 at cell 0 with an empty trace');
 
       // views
-      ui.setView(ui.view3d.ok ? '3d' : '2d');
       ui.stepForward(false); ui.stepForward(false);
-      var in3 = ui.disp().cur === 2 && ui.disp().head === 2 && ui.traceRows().length === 2;
       ui.setView('2d');
       var act = document.querySelectorAll('#view2d .state.active'), cells = el('tapeTrack').children;
       var in2 = act.length === 1 && act[0].getAttribute('data-state') === '2' && cells[2].classList.contains('cur') && ui.traceRows().length === 2;
       ui.setView('table');
       var cur = document.querySelectorAll('table.delta tbody tr.cur');
       var inT = cur.length === 1 && cur[0].firstChild.getAttribute('data-state') === '2' && cells[2].classList.contains('cur') && el('trace').querySelectorAll('tr[data-pos]').length === 2;
-      ok(in3 && in2 && inT, 'Views: after two steps, 3D, 2D and Table all show q2, head on cell 2, same trace', '3D ' + in3 + ', 2D ' + in2 + ', Table ' + inT);
+      ok(in2 && inT, 'Views: after two steps, 2D and Table both show q2, head on cell 2, same trace', '2D ' + in2 + ', Table ' + inT);
       ui.reset(); ui.app.speed = 4; ui.togglePlay();
       var sawPulse = false, tEnd = Date.now() + 700;
       while (Date.now() < tEnd) { await sleep(16); if (document.querySelector('table.delta td.pulse')) sawPulse = true; }
@@ -2333,7 +2242,7 @@ TM.selfTests = async function (ui, log) {
         'Path: after three steps the three edges taken and the three states left behind stay lit');
       ui.setExpand(true);
       var lit = Array.prototype.map.call(document.querySelectorAll('#view2d .edge.trail text'), function (x) { return x.textContent; }).sort().join('');
-      ok(ui.app.dedges.length === 92 && document.querySelectorAll('#view2d .edge').length === 92 && lit === '129' && (!ui.view3d.ok || ui.view3d.edgeMeshes.length === 92),
+      ok(ui.app.dedges.length === 92 && document.querySelectorAll('#view2d .edge').length === 92 && lit === '129',
         'Per-symbol edges: SSN draws 9 × 10 digit edges + 2 dashes, and the path lights the edges for 2, 1 and 9', ui.app.dedges.length + ' edges, lit ' + lit);
       for (a = 0; a < 8; a++) ui.stepForward(false);
       ok(ui.isHalted() && ui.disp().trail.size === 11, 'Per-symbol edges: the simulation is unchanged (ACCEPT after 11 steps, 11 edges lit)');
@@ -2368,32 +2277,37 @@ TM.selfTests = async function (ui, log) {
       ok(wOf('0–9') > wOf('-') * 2.5, '2D: an arrow carrying ten symbols is drawn much wider than a one-symbol arrow', wOf('0–9') + ' vs ' + wOf('-'));
 
       // rendering
-      ui.setView(ui.view3d.ok ? '3d' : '2d');
+      ui.setView('2d');
       ui.setPattern(SSN);
       var m = ui.app.machine;
       ok(document.querySelectorAll('#view2d .state').length === m.n, 'Rendering: 2D diagram draws one circle per DFA state');
-      if (ui.view3d.ok) ok(ui.view3d.stateMeshes.length === m.n && m.n === 13, 'Rendering: 3D state-sphere count equals the DFA state count', ui.view3d.stateMeshes.length + ' vs ' + m.n);
-      else log('  (3D checks skipped: Three.js is not loaded)');
       ui.setPattern('(abc');
-      ok(ui.view3d.sceneObjectCount() === 0 && ui.view3d.stateMeshes.length === 0 && !document.querySelector('#view2d .state') && !el('placeholder').hidden && el('stepBtn').disabled && el('string').disabled,
+      ok(!document.querySelector('#view2d .state') && !el('placeholder').hidden && el('stepBtn').disabled && el('string').disabled,
         'Rendering: an invalid pattern produces no scene objects, shows the placeholder and disables the controls');
       ok(el('patMsg').textContent === 'position 0: unclosed “(”' && !!document.querySelector('#patMirror .err'), 'Error line reads “position 0: unclosed “(”” and the character is underlined', el('patMsg').textContent);
       ui.setPattern('[a-z]{140}x{20}');
-      ok(ui.view3d.sceneObjectCount() === 0 && el('placeholder').textContent.indexOf('at most 150') > 0, 'Rendering: more than 150 states shows the cap message and no scene');
+      ok(!document.querySelector('#view2d .state') && el('placeholder').textContent.indexOf('at most 150') > 0, 'Rendering: more than 150 states shows the cap message and no scene');
 
-      // camera
-      if (ui.view3d.ok) {
-        ui.setPattern(SSN); ui.view3d.setView('reset', false); ui.view3d.frame(performance.now(), 16);
-        var cam = ui.view3d.cam, th0 = cam.theta, ph0 = cam.phi, cv = document.querySelector('#view3d canvas'), rc = cv.getBoundingClientRect();
-        var pe = function (type, x, y) { cv.dispatchEvent(new PointerEvent(type, { pointerId: 77, clientX: rc.left + x, clientY: rc.top + y, button: 0, bubbles: true })); };
-        pe('pointerdown', 200, 200); pe('pointermove', 260, 230); pe('pointermove', 320, 250); pe('pointerup', 320, 250);
-        var th1 = cam.theta, ph1 = cam.phi, r1c = cam.radius;
-        ok(Math.abs(th1 - th0) > 0.1 && cam.userMoved, 'Camera: dragging orbits the camera');
-        ui.setPattern('a(b|c)*d');
-        ok(cam.theta === th1 && cam.phi === ph1 && cam.radius === r1c, 'Camera: editing to another valid pattern keeps the camera position');
-        ui.view3d.setView('reset', false);
-        ok(cam.theta === th0 && cam.phi === ph0 && !cam.userMoved, 'Camera: Reset returns to the default view');
-      }
+      // folded return arrows and follow
+      ui.setPattern('.*(#|//) ?TODO\\(\\w+\\):.*'); ui.setString('// TODO(x):');
+      var folded = document.querySelectorAll('#view2d .edge.fold').length, stubs = document.querySelectorAll('#view2d .stub').length;
+      var hiddenAll = Array.prototype.every.call(document.querySelectorAll('#view2d .edge.fold'), function (g) { return getComputedStyle(g).display === 'none'; });
+      ok(ui.view2d.folding && folded > 10 && stubs > 5 && hiddenAll, 'Fold returns: a busy machine folds its fall-back arrows into stubs', folded + ' folded, ' + stubs + ' stubs');
+      ui.stepForward(false); ui.stepForward(false); ui.stepForward(false); ui.stepForward(false); ui.stepForward(false);
+      ui.setString('ab'); ui.stepForward(false); ui.stepForward(false);
+      ui.setString('#a'); ui.stepForward(false); ui.stepForward(false);
+      var shown = Array.prototype.filter.call(document.querySelectorAll('#view2d .edge.fold'), function (g) { return getComputedStyle(g).display !== 'none'; }).length;
+      ok(ui.disp().cur === 0 && shown === 1, 'Fold returns: a folded arrow is drawn in full once the string has travelled it', 'state q' + ui.disp().cur + ', ' + shown + ' shown');
+      el('foldBtn').click();
+      ok(!ui.view2d.folding && !document.querySelector('#view2d .edge.fold') && !document.querySelector('#view2d .stub'), 'Fold returns: switching it off draws every arrow');
+      ui.setPattern(SSN);
+      ok(!ui.view2d.folding && el('foldBtn').hidden, 'Fold returns: a machine with no fall-back arrows has nothing to fold');
+      el('followBtn').click();
+      var tf = ui.view2d.tf, k0 = tf.k; ui.setString('219-09-9999'); for (a = 0; a < 6; a++) ui.stepForward(false);
+      ui.view2d.frame(performance.now());
+      ok(ui.view2d.following && tf.k === k0, 'Follow: stays on while stepping and keeps its zoom');
+      document.querySelector('[data-cam="reset"]').click();
+      ok(!ui.view2d.following, 'Whole graph switches Follow off');
 
       // batch
       ui.setPattern(SSN);
@@ -2406,7 +2320,6 @@ TM.selfTests = async function (ui, log) {
       ui.setString('219-09-9999'); ui.toggleBreakpoint(7);
       while (ui.advance(false)) { /* play, synchronously */ }
       ok(ui.app.sim.pos === 7 && ui.disp().head === 7 && ui.disp().cur === 7 && !ui.isHalted(), 'Breakpoint on q7: Play pauses after step 7 with the head on cell 7', 'pos ' + ui.app.sim.pos);
-      ok(/ !$/m.test(ui.exportText('morphett')), 'Breakpoints are exported with morphett’s ! marker');
       ui.toggleBreakpoint(7);
 
       // failure pictures
@@ -2438,7 +2351,6 @@ TM.selfTests = async function (ui, log) {
     el('compare').value = saved.compare;
     ui.setPattern(saved.pattern, { notation: saved.notation, sigma: saved.sigma });
     ui.setExpand(saved.expand); ui.setString(saved.string); ui.setView(saved.view);
-    if (saved.cam) { var cc = ui.view3d.cam; cc.theta = saved.cam.theta; cc.phi = saved.cam.phi; cc.radius = saved.cam.radius; cc.target.copy(saved.cam.target); cc.userMoved = saved.cam.moved; }
   } else log('▸ UI tests skipped (no DOM)');
 
   log('');
@@ -2475,7 +2387,7 @@ var TMApp = (function () {
     notation: 'prog', compiled: null, machine: null, layout: null, bows: [],
     sim: { input: '', res: null, pos: 0 }, anim: null, playing: false, nextAt: 0, haltAt: 0, speed: 1,
     breakpoints: new Set(), view: '2d', pin: false, highlight: true, selTok: null, tuplesExpanded: false,
-    pinned: -1, lastVerdict: '', batchMs: 0, expand: false, dedges: [], dmap: [], pieces: [], pieceIdx: new Map(), selEdge: -1, selSet: new Set()
+    pinned: -1, lastVerdict: '', batchMs: 0, expand: false, fold: null, follow: null, dedges: [], dmap: [], pieces: [], pieceIdx: new Map(), selEdge: -1, selSet: new Set()
   };
   const stage = $('stage');
 
@@ -2501,29 +2413,20 @@ var TMApp = (function () {
   }
   function errText(e) { return e.pos >= 0 ? 'position ' + e.pos + ': ' + e.message : e.message; }
 
-  /* On a narrow (phone) screen the state chain wraps after four columns so the bubbles stay readable. */
-  const narrowMQ = window.matchMedia ? matchMedia('(max-width: 640px)') : null;
-  function rowCap() { if (!(narrowMQ && narrowMQ.matches) || !app.machine) return 0; const n = app.machine.live; return Math.max(4, Math.ceil(Math.sqrt(n * 1.3))); }
-  function relayout() {
-    if (!app.machine) return;
-    app.layout = TM.layout(app.machine, rowCap());
-    app.selEdge = -1; hideTip(true); computeBows(); computeDraw();
-    view3d.build(); view2d.userMoved = false; view2d.build(); syncAll();
-  }
   function recompile() {
     const pat = $('pattern').value, opts = getOpts();
     const c = opts.error ? { ok: false, error: { message: opts.error, pos: -1 } } : TM.compile(pat, opts);
     app.compiled = c; TM.last = c;
     app.machine = c.ok ? c.machine : null;
-    app.layout = c.ok ? TM.layout(c.machine, rowCap()) : null;
-    app.breakpoints.clear(); app.selTok = null; app.pinned = -1; app.selEdge = -1; app.selSet = new Set(); hideTip(true);
+    app.layout = c.ok ? TM.layout(c.machine) : null;
+    app.breakpoints.clear(); app.fold = null; app.follow = null; app.selTok = null; app.pinned = -1; app.selEdge = -1; app.selSet = new Set(); hideTip(true);
     if (c.ok) { computeBows(); computeDraw(); }
     showPattern(); renderPanels(); updateCompare();
     const ph = $('placeholder');
     ph.hidden = c.ok;
     ph.textContent = c.ok ? '' : (c.error.cap ? c.error.message : 'Fix the pattern to build the machine');
     $('stats').textContent = c.ok ? TM.plural(c.machine.live, 'state') + (c.machine.sink >= 0 ? ' + sink' : '') + ' · minimized DFA · ' + TM.plural(c.machine.classes.length, 'input class').replace(/classs$/, 'classes') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : ' · wider arrow = more symbols') : '';
-    view3d.build(); view2d.build(); tableView.build();
+    view2d.build(); tableView.build();
     loadString(app.sim.input);
   }
   function piecesFor(state, sym) { return TM.origins(app.machine, state, sym).map(n => app.pieceIdx.get(n.start + ',' + n.end)).filter(x => x != null); }
@@ -2605,7 +2508,7 @@ var TMApp = (function () {
   function renderTuples() {
     if (!app.machine) return;
     const lines = TM.tuples(app.machine, app.tuplesExpanded);
-    $('tuples').textContent = lines.length > 4000 ? lines.slice(0, 4000).join('\n') + '\n… (' + (lines.length - 4000) + ' more lines; use Export for the full file)' : lines.join('\n');
+    $('tuples').textContent = lines.length > 4000 ? lines.slice(0, 4000).join('\n') + '\n… (' + (lines.length - 4000) + ' more lines)' : lines.join('\n');
   }
   function updateCompare() {
     const v = $('compare').value, msg = $('cmpMsg'), ranges = [];
@@ -2674,7 +2577,7 @@ var TMApp = (function () {
     if (!app.machine) return;
     app.selEdge = -1; computeDraw(); hideTip(true);
     $('stats').textContent = $('stats').textContent.replace(/ · (\d+ per-symbol edges|wider arrow = more symbols)$/, '') + (app.expand ? ' · ' + app.dedges.length + ' per-symbol edges' : ' · wider arrow = more symbols');
-    view3d.build(); view2d.build(); syncAll();
+    view2d.build(); syncAll();
   }
 
   // ------------------------------------------------------------------ simulation
@@ -2717,7 +2620,7 @@ var TMApp = (function () {
     $('whyBtn').setAttribute('aria-expanded', 'false'); $('whyText').hidden = true;
     const r = app.sim.res;
     renderMirror($('strMirror'), $('string'), r && r.notRun && $('string').value === str ? [{ start: Array.from(str).slice(0, r.halt.position).join('').length, end: Array.from(str).slice(0, r.halt.position + 1).join('').length, cls: 'err' }] : []);
-    view3d.buildTape(); buildTapeStrip();
+    buildTapeStrip();
     syncAll();
   }
   function stepForward(animate) {
@@ -2947,397 +2850,6 @@ var TMApp = (function () {
     elm.addEventListener('contextmenu', e => e.preventDefault());
   }
 
-  // ------------------------------------------------------------------ 3D view (Three.js)
-  const view3d = (function () {
-    const V = { ok: false, group: null, stateMeshes: [], edgeMeshes: [], cam: { theta: -0.3, phi: 1.22, radius: 20, target: null, userMoved: false, tween: null, maxR: 200 } };
-    const R = 0.25, CW = 0.8, host = $('view3d');
-    const VIEWS = { default: [-0.3, 1.22], front: [0, Math.PI / 2], top: [0, 0.02], side: [Math.PI / 2, Math.PI / 2], iso: [Math.PI / 4, 0.9553] };
-    let T3, renderer, scene, camera, raycaster, canvas, col = {}, texCache = new Map(), glow = [], tints = [], shells = [], labels = [], bpRings = [], edgeObjs = {},
-      halo, particle, lit = new Set(), failDots = [], failRing, failKey = '', tape = null, grid = null, bounds = null, ptr = null, hoverKey = '', lastFired = null, geos = {}, tapeBase = null;
-
-    V.init = function () {
-      if (typeof THREE === 'undefined') return;
-      T3 = THREE;
-      try { renderer = new T3.WebGLRenderer({ antialias: true }); } catch (e) { return; }
-      V.ok = true;
-      canvas = renderer.domElement; host.append(canvas);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      scene = new T3.Scene();
-      camera = new T3.PerspectiveCamera(42, 1, 0.1, 4000);
-      V.cam.target = new T3.Vector3();
-      scene.add(new T3.AmbientLight(0xffffff, 1.5));
-      const sun = new T3.DirectionalLight(0xffffff, 2.4); sun.position.set(4, 10, 8); scene.add(sun);
-      scene.fog = new T3.Fog(0xffffff, 10, 100);
-      raycaster = new T3.Raycaster();
-      geos.sphere = new T3.SphereGeometry(R, 32, 20); geos.shell = new T3.SphereGeometry(R * 1.48, 32, 20);
-      geos.cone = new T3.ConeGeometry(0.075, 0.2, 14); geos.dot = new T3.SphereGeometry(0.055, 10, 8);
-      geos.cell = new T3.BoxGeometry(CW * 0.93, CW * 0.93, 0.05); geos.glyph = new T3.PlaneGeometry(CW * 0.8, CW * 0.8);
-      geos.head = new T3.ConeGeometry(0.19, 0.36, 4);
-      readColors();
-      gestures(canvas, {
-        drag(dx, dy, mode) {
-          const c = V.cam; c.tween = null; c.userMoved = true; hideTip();
-          if (mode === 'pan') {
-            const k = c.radius * Math.tan(camera.fov * Math.PI / 360) * 2 / Math.max(1, canvas.clientHeight);
-            const right = new T3.Vector3().setFromMatrixColumn(camera.matrixWorld, 0), up = new T3.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
-            c.target.addScaledVector(right, -dx * k).addScaledVector(up, dy * k);
-            if (bounds) c.target.clamp(bounds.min, bounds.max);
-          } else { c.theta -= dx * 0.006; c.phi = clamp(c.phi - dy * 0.006, 0.02, Math.PI - 0.05); }
-        },
-        zoom(f) { const c = V.cam; c.tween = null; c.userMoved = true; c.radius = clamp(c.radius / f, 1.3, c.maxR); },
-        hover(e) { ptr = { x: e.clientX, y: e.clientY, dirty: true }; },
-        leave() { ptr = null; hoverKey = ''; hideTip(); },
-        click(e) {
-          const hit = pick(e.clientX, e.clientY), r = canvas.getBoundingClientRect();
-          if (hit && hit.kind === 'state') { if (app.selEdge >= 0) hideTip(true); clickState(hit.id, e.clientX - r.left, e.clientY - r.top); }
-          else if (hit && hit.kind === 'edge') clickEdge(hit.id, e.clientX - r.left, e.clientY - r.top);
-          else hideTip(true);
-        }
-      });
-      V.resize();
-    };
-    function readColors() {
-      ['bg', 'panel', 'ink', 'accent', 'hl', 'accept', 'reject', 'muted', 'line'].forEach(k => { col[k] = new T3.Color(cssVar('--' + k)); });
-      col.onHl = new T3.Color(cssVar('--on-hl'));
-      col.piece = [0, 1, 2, 3, 4, 5].map(i => new T3.Color(cssVar('--p' + i)));
-      col.path = new T3.Color(cssVar('--path'));
-      col.sinkc = col.ink.clone().lerp(col.bg, 0.55); col.cell = col.panel.clone().lerp(col.ink, 0.1);
-      col.css = { bg: cssVar('--bg'), ink: cssVar('--ink'), panel: cssVar('--panel'), reject: cssVar('--reject'), accent: cssVar('--accent') };
-      scene.background = col.bg; scene.fog.color = col.bg;
-    }
-    V.applyTheme = function () {
-      if (!V.ok) return;
-      texCache.forEach(t => t.tex.dispose()); texCache.clear();
-      readColors(); V.build(); V.buildTape();
-    };
-    function textTex(text, fill, stroke, weight) {
-      const key = text + '|' + fill + '|' + stroke + '|' + weight;
-      let t = texCache.get(key);
-      if (t) return t;
-      const c = document.createElement('canvas'), g = c.getContext('2d'), font = weight + ' 64px "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace';
-      g.font = font;
-      c.width = Math.max(64, Math.ceil(g.measureText(text).width) + 32); c.height = 96;
-      g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-      if (stroke) { g.lineWidth = 12; g.strokeStyle = stroke; g.strokeText(text, c.width / 2, 50); }
-      g.fillStyle = fill; g.fillText(text, c.width / 2, 50);
-      const tex = new T3.CanvasTexture(c); tex.colorSpace = T3.SRGBColorSpace; tex.anisotropy = 4;
-      t = { tex: tex, aspect: c.width / c.height }; texCache.set(key, t);
-      return t;
-    }
-    function sprite(text, height, fill, stroke, weight) {
-      const t = textTex(text, fill, stroke, weight || 600);
-      const sp = new T3.Sprite(new T3.SpriteMaterial({ map: t.tex, transparent: true, depthTest: false, depthWrite: false }));
-      sp.scale.set(height * t.aspect, height, 1); sp.renderOrder = 10;
-      return sp;
-    }
-    function ringTex(kind) { // 'ring' (hollow circle) or 'halo' (soft radial glow)
-      let t = texCache.get('#' + kind);
-      if (t) return t.tex;
-      const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
-      if (kind === 'halo') { const gr = g.createRadialGradient(64, 64, 8, 64, 64, 62); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(0.45, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); }
-      else { g.strokeStyle = '#fff'; g.lineWidth = 9; g.beginPath(); g.arc(64, 64, 54, 0, Math.PI * 2); g.stroke(); }
-      const tex = new T3.CanvasTexture(c); texCache.set('#' + kind, { tex: tex });
-      return tex;
-    }
-    function ringSprite(kind, color, scale) {
-      const sp = new T3.Sprite(new T3.SpriteMaterial({ map: ringTex(kind), color: color, transparent: true, depthTest: false, depthWrite: false }));
-      sp.scale.setScalar(scale); sp.renderOrder = kind === 'halo' ? 1 : 9;
-      return sp;
-    }
-    function v3(p) { return new T3.Vector3(p.x, p.y, p.z); }
-    function disposeGroup(g) {
-      if (!g) return;
-      g.traverse(o => { if (o.geometry && !o.userData.shared) o.geometry.dispose(); if (o.material) o.material.dispose(); });
-      scene.remove(g);
-    }
-    function cone(pos, dir, mat) {
-      const c = new T3.Mesh(geos.cone, mat); c.userData.shared = true;
-      c.position.copy(pos); c.quaternion.setFromUnitVectors(new T3.Vector3(0, 1, 0), dir.clone().normalize());
-      return c;
-    }
-
-    V.build = function () {
-      if (!V.ok) return;
-      disposeGroup(V.group); V.group = null; V.stateMeshes = []; V.edgeMeshes = [];
-      shells = []; labels = []; bpRings = []; edgeObjs = {}; failDots = []; glow = []; tints = []; lastFired = null; lit = new Set(); failKey = ''; hoverKey = '';
-      if (grid) { scene.remove(grid); grid.geometry.dispose(); grid.material.dispose(); grid = null; }
-      const m = app.machine, L = app.layout;
-      if (!m) { bounds = null; return; }
-      const G = V.group = new T3.Group(), P = L.pos.map(v3);
-      for (let s = 0; s < m.n; s++) {
-        const isSink = s === m.sink;
-        const mesh = new T3.Mesh(geos.sphere, new T3.MeshStandardMaterial({ color: isSink ? col.sinkc : col.ink, roughness: 0.42, metalness: 0.05, transparent: isSink, opacity: isSink ? 0.8 : 1 }));
-        mesh.userData = { shared: true, kind: 'state', id: s }; mesh.position.copy(P[s]);
-        G.add(mesh); V.stateMeshes.push(mesh); glow.push(0); tints.push(col.hl);
-        if (m.accept[s]) { // the double circle, in 3D
-          const sh = new T3.Mesh(geos.shell, new T3.MeshStandardMaterial({ color: col.accept, transparent: true, opacity: 0.3, depthWrite: false, roughness: 0.3 }));
-          sh.userData.shared = true; sh.position.copy(P[s]); G.add(sh); shells[s] = sh;
-        }
-        const lab = isSink ? sprite('sink', 0.2, col.css.reject, col.css.bg, 500) : sprite(m.names[s], 0.2, col.css.bg, col.css.ink);
-        lab.position.copy(P[s]); if (isSink) lab.position.y -= 0.36;
-        G.add(lab); labels.push(lab);
-        const bp = ringSprite('ring', col.reject, 0.92); bp.position.copy(P[s]); bp.visible = false; G.add(bp); bpRings.push(bp);
-      }
-      // start marker: an arrow flying in from the left
-      const sp0 = P[m.start], amat = new T3.MeshStandardMaterial({ color: col.accent, roughness: 0.5 });
-      const shaft = new T3.Mesh(new T3.CylinderGeometry(0.03, 0.03, 0.55, 8), amat);
-      shaft.position.set(sp0.x - R - 0.52, sp0.y, sp0.z); shaft.rotation.z = Math.PI / 2; G.add(shaft);
-      G.add(cone(new T3.Vector3(sp0.x - R - 0.16, sp0.y, sp0.z), new T3.Vector3(1, 0, 0), amat));
-      const st = sprite('start', 0.17, col.css.accent, col.css.bg, 500); st.position.set(sp0.x - R - 0.55, sp0.y + 0.2, sp0.z); G.add(st); labels.push(st);
-      // transitions: one tube per drawn edge; per-symbol edges fan out in a ring around the straight line
-      app.dedges.forEach(e => {
-        const a = P[e.from], b = P[e.to], dense = e.n > 1, ang = dense ? Math.PI * 2 * e.k / e.n : 0, tr = 0.017 + 0.0075 * Math.log2(e.count); // thicker tube = more symbols
-        const base = e.color >= 0 ? col.piece[e.color] : col.muted, mat = new T3.MeshStandardMaterial({ color: base, roughness: 0.55 }); // coloured like its piece of the pattern
-        let curve, pointAt, labelPos, tipPos, tipDir;
-        if (e.loop) { // a small circle above the state; per-symbol loops lean outwards like petals
-          const tilt = dense ? 0.95 : 0, out = new T3.Vector3(Math.cos(ang), 0, Math.sin(ang)), up = new T3.Vector3(0, 1, 0);
-          const e2 = out.clone().multiplyScalar(Math.sin(tilt)).addScaledVector(up, Math.cos(tilt)), e1 = out.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(up, -Math.sin(tilt));
-          const c = a.clone().addScaledVector(e2, 0.4), r = 0.25, a0 = -Math.PI / 2 + 0.75, span = Math.PI * 2 - 1.5;
-          pointAt = t => c.clone().addScaledVector(e1, r * Math.cos(a0 + t * span)).addScaledVector(e2, r * Math.sin(a0 + t * span));
-          const pts = []; for (let k = 0; k <= 28; k++) pts.push(pointAt(k / 28 * 0.93));
-          curve = new T3.CatmullRomCurve3(pts);
-          tipPos = pointAt(0.95); tipDir = pointAt(1).sub(pointAt(0.9));
-          labelPos = c.clone().addScaledVector(e2, r + 0.17);
-        } else {
-          const d = b.clone().sub(a), len = d.length(), l2 = Math.hypot(d.x, d.y);
-          const n = l2 > 1e-3 ? new T3.Vector3(-d.y / l2, d.x / l2, 0) : new T3.Vector3(0, 1, 0);
-          const w = new T3.Vector3().crossVectors(d.clone().normalize(), n), fan = n.clone().multiplyScalar(Math.cos(ang)).addScaledVector(w, Math.sin(ang));
-          const ctrl = a.clone().add(b).multiplyScalar(0.5).addScaledVector(n, app.bows[e.eid] * len).addScaledVector(fan, dense ? clamp(e.n * 0.09, 0.4, 1.6) : 0);
-          const q = new T3.QuadraticBezierCurve3(a, ctrl, b), endR = (m.accept[e.to] ? R * 1.48 : R) + 0.2 * clamp(tr / 0.027, 0.6, 2.2);
-          let t0 = 0, t1 = 1;
-          for (let k = 0; k <= 80; k++) { const pt = q.getPoint(k / 80); if (pt.distanceTo(a) < R) t0 = k / 80; if (pt.distanceTo(b) >= endR) t1 = k / 80; else break; }
-          if (t1 <= t0) { t0 = 0.2; t1 = 0.8; }
-          const pts = []; for (let k = 0; k <= 20; k++) pts.push(q.getPoint(t0 + (t1 - t0) * k / 20));
-          curve = new T3.CatmullRomCurve3(pts);
-          pointAt = t => q.getPoint(t);
-          tipDir = q.getTangent(t1); tipPos = q.getPoint(t1).addScaledVector(tipDir, 0.1 * clamp(tr / 0.027, 0.6, 2.2));
-          labelPos = dense ? q.getPoint(0.5).addScaledVector(fan, 0.13) : q.getPoint(0.5).addScaledVector(n, 0.24);
-        }
-        const tube = new T3.Mesh(new T3.TubeGeometry(curve, e.loop ? 28 : dense ? 14 : 20, tr, dense ? 5 : 6, false), mat);
-        tube.userData = { kind: 'edge', id: e.id }; G.add(tube); V.edgeMeshes.push(tube);
-        const head = cone(tipPos, tipDir, mat); head.userData.kind = 'edge'; head.userData.id = e.id; head.scale.setScalar(clamp(tr / 0.027, 0.6, 2.2)); G.add(head);
-        const lab = sprite(e.label, dense ? 0.15 : 0.2, col.css.ink, col.css.bg, 500); lab.position.copy(labelPos); G.add(lab); labels.push(lab);
-        edgeObjs[e.id] = { mat: mat, pointAt: pointAt, curve: curve, r: tr, glow: null, base: base };
-      });
-      // helpers that move around: glow halo, travelling particle, failure markers
-      halo = ringSprite('halo', col.hl, 1.9); halo.visible = false; G.add(halo);
-      particle = new T3.Mesh(new T3.SphereGeometry(0.085, 14, 10), new T3.MeshStandardMaterial({ color: col.hl, emissive: col.hl, emissiveIntensity: 0.7 }));
-      particle.visible = false; G.add(particle);
-      failRing = ringSprite('ring', col.reject, 1.25); failRing.visible = false; G.add(failRing);
-      const dmat = new T3.MeshStandardMaterial({ color: col.reject, emissive: col.reject, emissiveIntensity: 0.5 });
-      for (let k = 0; k < 18; k++) { const dot = new T3.Mesh(geos.dot, k ? dmat : dmat); dot.userData.shared = true; dot.visible = false; G.add(dot); failDots.push(dot); }
-      scene.add(G);
-      // bounds: the graph, the sink below it and the tape in front
-      const width = Math.max(L.max.x - L.min.x + 2.2, 11);
-      tapeBase = { y: L.min.y - 3.5, z: L.max.z + 1.8, width: width, win: Math.floor(width / CW) };
-      bounds = { min: new T3.Vector3(-width / 2 - 0.4, tapeBase.y - 0.7, L.min.z - 0.7), max: new T3.Vector3(width / 2 + 0.4, L.max.y + 1.2, tapeBase.z + 0.7) };
-      const size = Math.max(width, L.max.z - L.min.z + 6) * 2.2;
-      grid = new T3.GridHelper(size, Math.max(8, Math.round(size / 1.2)), col.muted, col.line);
-      grid.position.set(0, tapeBase.y - 0.75, (L.min.z + tapeBase.z) / 2); grid.material.transparent = true; grid.material.opacity = 0.5;
-      scene.add(grid);
-      V.cam.maxR = Math.max(30, fitRadius(VIEWS.iso[0], VIEWS.iso[1], center()) * 3);
-      if (!V.cam.userMoved) V.setView('default', false);
-    };
-
-    V.buildTape = function () {
-      if (!V.ok) return;
-      if (tape) { disposeGroup(tape.group); tape = null; }
-      const r = app.sim.res;
-      if (!r || !app.machine || !tapeBase) return;
-      const g = new T3.Group(), cells = [], chars = r.chars.concat(['⊔', '⊔', '⊔']);
-      chars.forEach((c, i) => {
-        const box = new T3.Mesh(geos.cell, new T3.MeshStandardMaterial({ color: col.panel, roughness: 0.7, transparent: true }));
-        box.userData.shared = true; box.position.x = i * CW;
-        const t = textTex(c === ' ' ? '␣' : vis(c), '#ffffff', '', 600);
-        const gl = new T3.Mesh(geos.glyph, new T3.MeshBasicMaterial({ map: t.tex, transparent: true, color: col.ink }));
-        gl.userData.shared = true; gl.position.set(i * CW, 0, 0.03); gl.scale.x = Math.min(1, t.aspect * 0.8);
-        g.add(box, gl); cells.push({ box: box, glyph: gl });
-      });
-      const head = new T3.Mesh(geos.head, new T3.MeshStandardMaterial({ color: col.accent, roughness: 0.4 }));
-      head.userData.shared = true; head.rotation.x = -Math.PI / 2; head.position.z = 0.5; g.add(head);
-      g.rotation.x = -0.85; g.position.set(0, tapeBase.y, tapeBase.z);
-      scene.add(g);
-      tape = { group: g, cells: cells, head: head, N: chars.length, len: r.chars.length };
-    };
-
-    function center() { return bounds ? bounds.min.clone().add(bounds.max).multiplyScalar(0.5) : new T3.Vector3(); }
-    function fitRadius(theta, phi, target) {
-      if (!bounds) return 20;
-      const back = new T3.Vector3(Math.sin(phi) * Math.sin(theta), Math.cos(phi), Math.sin(phi) * Math.cos(theta)), fwd = back.clone().negate();
-      const right = new T3.Vector3().crossVectors(fwd, new T3.Vector3(0, 1, 0)).normalize(), up = new T3.Vector3().crossVectors(right, fwd);
-      const tv = Math.tan(camera.fov * Math.PI / 360), th = tv * camera.aspect;
-      let need = 2;
-      for (let k = 0; k < 8; k++) {
-        const v = new T3.Vector3(k & 1 ? bounds.max.x : bounds.min.x, k & 2 ? bounds.max.y : bounds.min.y, k & 4 ? bounds.max.z : bounds.min.z).sub(target);
-        const f = v.dot(fwd);
-        need = Math.max(need, Math.abs(v.dot(right)) / th - f, Math.abs(v.dot(up)) / tv - f);
-      }
-      return need * 1.03;
-    }
-    V.setView = function (name, animate) {
-      if (!V.ok) return;
-      const c = V.cam, key = name === 'reset' ? 'default' : name, v = VIEWS[key], target = center();
-      const to = { theta: v[0], phi: v[1], target: target, radius: fitRadius(v[0], v[1], target) };
-      if (name === 'reset' || name === 'default') c.userMoved = false; else c.userMoved = true;
-      if (animate && !reduceMotion()) {
-        let dth = (to.theta - c.theta) % (Math.PI * 2); if (dth > Math.PI) dth -= Math.PI * 2; if (dth < -Math.PI) dth += Math.PI * 2;
-        c.tween = { t0: performance.now(), from: { theta: c.theta, phi: c.phi, radius: c.radius, target: c.target.clone() }, to: to, dth: dth };
-      } else { c.tween = null; c.theta = to.theta; c.phi = to.phi; c.radius = to.radius; c.target.copy(to.target); }
-    };
-    function applyCamera(now) {
-      const c = V.cam;
-      if (c.tween) {
-        const k = clamp((now - c.tween.t0) / 400, 0, 1), e = ease(k), f = c.tween.from, t = c.tween.to;
-        c.theta = f.theta + c.tween.dth * e; c.phi = f.phi + (t.phi - f.phi) * e; c.radius = f.radius + (t.radius - f.radius) * e;
-        c.target.lerpVectors(f.target, t.target, e);
-        if (k >= 1) c.tween = null;
-      }
-      const sp = Math.sin(c.phi);
-      camera.position.set(c.target.x + c.radius * sp * Math.sin(c.theta), c.target.y + c.radius * Math.cos(c.phi), c.target.z + c.radius * sp * Math.cos(c.theta));
-      camera.lookAt(c.target);
-      camera.updateMatrixWorld();
-      const span = bounds ? bounds.max.distanceTo(bounds.min) : 20;
-      scene.fog.near = c.radius * 0.75; scene.fog.far = c.radius + span * 2.6 + 20;
-    }
-    V.resize = function () {
-      if (!V.ok) return;
-      const w = host.clientWidth, hh = host.clientHeight;
-      if (!w || !hh) return;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.setSize(w, hh, false);
-      camera.aspect = w / hh; camera.updateProjectionMatrix();
-      if (!V.cam.userMoved && bounds && !V.cam.tween) V.setView('default', false);
-    };
-    function pick(cx, cy) {
-      if (!V.group) return null;
-      const r = canvas.getBoundingClientRect();
-      raycaster.setFromCamera(new T3.Vector2((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera);
-      const hits = raycaster.intersectObjects(V.stateMeshes.concat(V.edgeMeshes), false);
-      return hits.length ? hits[0].object.userData : null;
-    }
-    function toScreen(v) {
-      const p = v.clone().project(camera);
-      return { x: (p.x + 1) / 2 * canvas.clientWidth, y: (1 - p.y) / 2 * canvas.clientHeight, behind: p.z > 1 };
-    }
-    function failPath(from, t) { // curved path from a state down to the sink
-      const m = app.machine, a = V.stateMeshes[from].position, b = V.stateMeshes[m.sink].position;
-      const c = new T3.Vector3((a.x + b.x) / 2 + (a.x >= b.x ? 0.8 : -0.8), Math.max(a.y, b.y) - 0.3, (a.z + b.z) / 2 + 0.9);
-      const u = 1 - t;
-      return new T3.Vector3(u * u * a.x + 2 * u * t * c.x + t * t * b.x, u * u * a.y + 2 * u * t * c.y + t * t * b.y, u * u * a.z + 2 * u * t * c.z + t * t * b.z);
-    }
-
-    V.frame = function (now, dt) {
-      if (!V.ok) return;
-      applyCamera(now);
-      const m = app.machine, d = disp(), on = app.highlight;
-      if (V.group && m) {
-        const p = d && d.anim ? clamp((now - d.anim.t0) / d.anim.dur, 0, 1) : 1;
-        const ft = d && d.halted && app.haltAt ? now - app.haltAt : 1e9;
-        const flash = ft < 1200 ? 0.5 - 0.5 * Math.cos(ft / 1200 * 6 * Math.PI) : 0; // three pulses
-        for (let s = 0; s < m.n; s++) {
-          const mesh = V.stateMeshes[s], isSink = s === m.sink;
-          let target = 0;
-          if (d && on) {
-            if (s === d.cur) { target = 1; tints[s] = d.halted ? (d.kind === 'accept' ? col.accept : col.reject) : col.hl; }
-            else if (d.visited.has(s)) { target = 0.5; tints[s] = col.hl; } // already on the path
-            if (isSink && d.sinkLit) { target = 1; tints[s] = col.reject; }
-          }
-          glow[s] = target > glow[s] ? Math.min(target, glow[s] + dt / 110) : Math.max(target, glow[s] - dt / 300); // previous state fades over 300 ms
-          const g = glow[s], pulse = d && on && d.halted && s === d.cur ? flash : 0;
-          mesh.material.color.copy(isSink ? col.sinkc : col.ink).lerp(tints[s], g);
-          mesh.material.emissive.copy(tints[s]).multiplyScalar(g * 0.4).lerp(col.hl, pulse * 0.7);
-          if (isSink) mesh.material.opacity = 0.8 + 0.2 * g;
-          const sc = 1 + 0.2 * g + 0.22 * pulse;
-          mesh.scale.setScalar(isSink ? 0.72 * sc : sc);
-          if (shells[s]) shells[s].scale.setScalar(sc);
-          bpRings[s].visible = app.breakpoints.has(s);
-        }
-        labels.forEach(l => { l.visible = on; });
-        halo.visible = !!(d && on && d.cur >= 0 && glow[d.cur] > 0.02);
-        if (halo.visible) { halo.position.copy(V.stateMeshes[d.cur].position); halo.material.color.copy(tints[d.cur]); halo.material.opacity = glow[d.cur] * 0.75; }
-        failRing.visible = !!(d && d.halted && (d.kind === 'out-of-input' || d.kind === 'empty'));
-        if (failRing.visible) failRing.position.copy(V.stateMeshes[d.cur].position);
-        // fired edge + travelling particle
-        const step = d && d.anim ? d.anim.step : null, toSink = step && step.next === m.sink;
-        const fired = step && !toSink ? app.dmap[step.state][m.sigma.index.get(step.symbol)] : null;
-        // the path followed so far: a highlighter-coloured sleeve around every edge already taken
-        const want = new Set(d && on ? d.trail : []);
-        if (fired !== null && on) want.add(fired);
-        app.selSet.forEach(id => want.add(id));
-        lit.forEach(id => { if (!want.has(id) && edgeObjs[id] && edgeObjs[id].glow) edgeObjs[id].glow.visible = false; });
-        want.forEach(id => {
-          const eo = edgeObjs[id]; if (!eo) return;
-          if (!eo.glow) {
-            eo.glow = new T3.Mesh(new T3.TubeGeometry(eo.curve, 18, eo.r + 0.045, 8, false), new T3.MeshBasicMaterial({ color: col.hl, transparent: true, opacity: 0.8, depthWrite: false }));
-            V.group.add(eo.glow);
-          }
-          eo.glow.visible = true;
-          eo.glow.material.color.copy(app.selSet.has(id) ? eo.base : col.path); // selected: its own colour; path: highlighter
-        });
-        lit = want;
-        if (lastFired !== null && lastFired !== fired && edgeObjs[lastFired]) { edgeObjs[lastFired].mat.color.copy(edgeObjs[lastFired].base); edgeObjs[lastFired].mat.emissive.setRGB(0, 0, 0); }
-        lastFired = fired;
-        particle.visible = false;
-        if (fired !== null && edgeObjs[fired] && on) {
-          const k = Math.sin(Math.PI * p), eo = edgeObjs[fired];
-          eo.mat.color.copy(eo.base).lerp(col.hl, k); eo.mat.emissive.copy(col.hl).multiplyScalar(k * 0.6);
-          particle.visible = true; particle.position.copy(eo.pointAt(ease(p)));
-        }
-        // the failing move into the sink: a dotted red edge
-        const failFrom = toSink ? step.state : (d && d.halted && d.kind === 'no-transition' ? d.cur : -1);
-        const key = String(failFrom);
-        if (key !== failKey) {
-          failKey = key;
-          failDots.forEach((dot, k) => { dot.visible = failFrom >= 0; if (failFrom >= 0) dot.position.copy(failPath(failFrom, 0.1 + 0.82 * k / (failDots.length - 1))); });
-        }
-        if (toSink && on) { particle.visible = true; particle.position.copy(failPath(step.state, ease(p))); }
-        // tape and head
-        if (tape && d) {
-          let hf = Math.max(0, d.head);
-          if (d.anim && !toSink) hf = d.anim.fromPos + ease(p);
-          const N = tape.N, win = Math.max(8, tapeBase.win), scroll = N > win ? clamp(hf - (win - 1) / 2, 0, N - win) : 0;
-          tape.group.position.x = (N > win ? -win * CW / 2 : -N * CW / 2) + CW / 2 - scroll * CW;
-          const cur = Math.round(hf);
-          tape.cells.forEach((c, i) => {
-            const show = N <= win || (i >= scroll - 0.55 && i <= scroll + win - 0.45);
-            c.box.visible = c.glyph.visible = show;
-            if (!show) return;
-            const fail = i === d.failCell, isCur = i === cur && d.head >= 0 && !fail && on, ghost = i > tape.len;
-            c.box.material.color.copy(fail ? col.reject : isCur ? col.hl : col.cell);
-            c.glyph.material.color.copy(fail ? col.panel : isCur ? col.onHl : i >= tape.len ? col.muted : col.ink);
-            c.box.material.opacity = c.glyph.material.opacity = fail || isCur ? 1 : ghost ? 0.3 : i < hf - 0.5 ? 0.38 : 1;
-          });
-          tape.head.visible = d.head >= 0;
-          tape.head.position.x = hf * CW;
-        }
-        // overlays that follow the scene: verdict badge beside the tape, pinned tooltip on its state
-        const badge = $('stageBadge');
-        if (badge.className && tapeBase && app.view === '3d') {
-          const sp = toScreen(new T3.Vector3(0, tapeBase.y - 0.55, tapeBase.z + 0.4)), bw = badge.offsetWidth, bh = badge.offsetHeight, w = canvas.clientWidth, hh = canvas.clientHeight;
-          badge.style.transform = 'translate(' + Math.round(clamp(sp.x - bw / 2, 8, Math.max(8, w - bw - 8))) + 'px,' + Math.round(clamp(sp.y, 56, Math.max(56, hh - bh - 8))) + 'px)';
-        }
-        if (app.pinned >= 0 && app.view === '3d' && V.stateMeshes[app.pinned]) {
-          const sp = toScreen(V.stateMeshes[app.pinned].position);
-          tip.style.left = clamp(sp.x + 16, 4, Math.max(4, canvas.clientWidth - tip.offsetWidth - 4)) + 'px';
-          tip.style.top = clamp(sp.y + 16, 4, Math.max(4, canvas.clientHeight - tip.offsetHeight - 4)) + 'px';
-        }
-        if (ptr && ptr.dirty) {
-          ptr.dirty = false;
-          const hit = pick(ptr.x, ptr.y), key2 = hit ? hit.kind + hit.id : '';
-          canvas.style.cursor = hit ? 'pointer' : '';
-          if (app.pinned < 0 && app.selEdge < 0) {
-            const r = canvas.getBoundingClientRect();
-            if (hit) showTip(hit.kind === 'state' ? tipState(hit.id) : tipEdge(hit.id), ptr.x - r.left, ptr.y - r.top, false);
-            else if (hoverKey) hideTip();
-          }
-          hoverKey = key2;
-        }
-      }
-      renderer.render(scene, camera);
-    };
-    V.sceneObjectCount = () => V.group ? V.group.children.length : 0;
-    return V;
-  })();
 
   // ------------------------------------------------------------------ 2D view (inline SVG)
   const view2d = (function () {
@@ -3347,6 +2859,7 @@ var TMApp = (function () {
     function apply() { if (root) root.setAttribute('transform', 'translate(' + W.tf.x + ',' + W.tf.y + ') scale(' + W.tf.k + ')'); }
     function unit(x, y) { const l = Math.hypot(x, y) || 1; return [x / l, y / l]; }
     let loopDir = [], Rr = [];
+    W.fold = new Set(); W.peek = new Set(); W.stubs = {};
     const widthOf = e => 1.5 + 1.45 * Math.log2(e.count); // arrow width grows with the number of symbols it accepts
     const fitText = (s, max) => s.length <= max ? s : s.slice(0, Math.max(2, max - 1)).replace(/[, ]+$/, '') + '…';
     function edgeGeom(e) { // e is a drawn edge; e.k of e.n when symbols are drawn individually
@@ -3379,7 +2892,7 @@ var TMApp = (function () {
       const m = app.machine, cand = [-90, 90, -45, -135, 45, 135].map(d => d * Math.PI / 180);
       loopDir = P.map((p, s) => {
         const used = s === m.start ? [Math.PI] : [];
-        app.dedges.forEach(e => { if (!e.loop && (e.from === s || e.to === s)) { const o = P[e.from === s ? e.to : e.from]; used.push(Math.atan2(o.y - p.y, o.x - p.x)); } });
+        app.dedges.forEach(e => { if (!e.loop && !W.fold.has(e.id) && (e.from === s || e.to === s)) { const o = P[e.from === s ? e.to : e.from]; used.push(Math.atan2(o.y - p.y, o.x - p.x)); } });
         let best = cand[0], score = -1;
         cand.forEach((c, i) => {
           let near = Math.PI;
@@ -3397,15 +2910,48 @@ var TMApp = (function () {
       P = L.pos.map(p => ({ x: p.x * S * 1.15, y: -p.y * S }));
       // bubble size: the more symbols a state can accept, the bigger it is drawn
       Rr = P.map((p, s) => s === m.sink ? 15 : 17 + 1.6 * Math.log2(1 + m.edges.reduce((n, e) => n + (e.from === s && !e.toSink ? e.classes.reduce((k, ci) => k + m.classes[ci].syms.length, 0) : 0), 0)));
+      /* Return arrows: a transition that falls back to an earlier state. A pattern that starts with .* has one from
+         nearly every state, and drawn in full they bury the diagram, so a busy machine folds each into a short stub
+         ("↩ q0") beside its state. A folded arrow is drawn in full while the string travels it, or when its stub is tapped. */
+      const rank = L.rank, isRet = e => !e.loop && e.from < m.live && e.to < m.live && rank[e.to] < rank[e.from];
+      const pairs = new Set(); app.dedges.forEach(e => { if (isRet(e)) pairs.add(e.from + '>' + e.to); });
+      W.folding = pairs.size > 0 && (app.fold == null ? pairs.size >= 5 : app.fold);
+      W.fold = new Set(); W.peek = new Set(); W.stubs = {};
+      if (W.folding) app.dedges.forEach(e => { if (isRet(e)) W.fold.add(e.id); });
+      const fb = $('foldBtn'); fb.hidden = !pairs.size; fb.setAttribute('aria-pressed', String(W.folding));
       chooseLoopDirs();
-      const gE = sv('g'), gS = sv('g');
+      const gE = sv('g'), gS = sv('g'), gT = sv('g');
+      if (W.folding) for (let s = 0; s < m.live; s++) {
+        const tos = []; app.dedges.forEach(e => { if (e.from === s && W.fold.has(e.id) && tos.indexOf(e.to) < 0) tos.push(e.to); });
+        if (!tos.length) continue;
+        tos.sort((x, y) => rank[x] - rank[y] || x - y);
+        const used = s === m.start ? [Math.PI] : [];
+        app.dedges.forEach(e => { if (e.loop) { if (e.from === s) used.push(loopDir[s]); } else if (!W.fold.has(e.id) && (e.from === s || e.to === s)) { const o = P[e.from === s ? e.to : e.from]; used.push(Math.atan2(o.y - P[s].y, o.x - P[s].x)); } });
+        P.forEach((o, t) => { if (t !== s && Math.hypot(o.x - P[s].x, o.y - P[s].y) < 175) used.push(Math.atan2(o.y - P[s].y, o.x - P[s].x)); });
+        let th = Math.PI / 2, score = -1;
+        [90, -90, 135, 45, -135, -45, 180, 0].forEach((dg, i) => {
+          const c = dg * Math.PI / 180; let near = Math.PI;
+          used.forEach(u => { let dd = Math.abs(c - u) % (2 * Math.PI); if (dd > Math.PI) dd = 2 * Math.PI - dd; near = Math.min(near, dd); });
+          if (near - i * 0.05 > score) { score = near - i * 0.05; th = c; }
+        });
+        const ux = Math.cos(th), uy = Math.sin(th), r0 = Rr[s] + (m.accept[s] ? 5.5 : 0) + 3, x = P[s].x, y = P[s].y;
+        const g = sv('g', { class: 'stub', 'data-from': s });
+        const label = '↩ ' + tos.slice(0, 3).map(t => m.names[t]).join(' ') + (tos.length > 3 ? ' …' : '');
+        const tx = x + ux * (r0 + 24), ty = y + uy * (r0 + 26);
+        const text = sv('text', { x: tx.toFixed(1), y: ty.toFixed(1), 'dominant-baseline': 'central', 'text-anchor': ux > 0.3 ? 'start' : ux < -0.3 ? 'end' : 'middle' }); text.textContent = label;
+        const tt = sv('title'); tt.textContent = 'Other symbols send ' + m.names[s] + ' back to ' + tos.map(t => m.names[t]).join(', ') + '. Tap to show these arrows.';
+        const bw = label.length * 6.6 + 12, bx = ux > 0.3 ? tx - 6 : ux < -0.3 ? tx - bw + 6 : tx - bw / 2;
+        g.append(tt, sv('rect', { x: bx.toFixed(1), y: (ty - 10).toFixed(1), width: bw.toFixed(1), height: 20, rx: 10 }),
+          sv('line', { x1: x + ux * r0, y1: y + uy * r0, x2: x + ux * (r0 + 9), y2: y + uy * (r0 + 9) }), sv('polygon', { points: tri(x + ux * (r0 + 17), y + uy * (r0 + 17), [ux, uy], 8, 4) }), text);
+        gT.append(g); W.stubs[s] = g;
+      }
       app.dedges.slice().sort((x, y) => y.count - x.count).forEach(e => { // widest first, so thin edges stay visible on top
-        const geo = edgeGeom(e), g = sv('g', { class: 'edge' + (e.n > 1 ? ' dense' : ''), 'data-edge': e.id }), path = sv('path', { d: geo.d, class: 'line' });
+        const geo = edgeGeom(e), g = sv('g', { class: 'edge' + (e.n > 1 ? ' dense' : '') + (W.fold.has(e.id) ? ' fold' : ''), 'data-edge': e.id }), path = sv('path', { d: geo.d, class: 'line' });
         const text = sv('text', { x: geo.lx.toFixed(1), y: geo.ly.toFixed(1), 'dominant-baseline': 'central' }); text.textContent = geo.label;
         g.append(sv('path', { d: geo.d, class: 'glow' }), sv('path', { d: geo.d, class: 'hit' }), path, sv('polygon', { points: geo.tri }), text);
         g.style.setProperty('--ec', e.color >= 0 ? 'var(--p' + e.color + ')' : 'var(--muted)');
         g.style.setProperty('--w', geo.w.toFixed(2) + 'px');
-        gE.append(g); W.edges[e.id] = { g: g, path: path };
+        gE.append(g); W.edges[e.id] = { g: g, path: path, from: e.from };
       });
       faildash = sv('path', { class: 'faildash' });
       const a0 = P[m.start];
@@ -3424,21 +2970,40 @@ var TMApp = (function () {
         gS.append(g); W.states.push(g);
       }
       particle = sv('circle', { class: 'particle', r: 6 });
-      root.append(gE, faildash, arrow, gS, particle);
+      root.append(gE, gT, faildash, arrow, gS, particle);
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       P.forEach(p => { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); });
       box = { x0: x0 - RAD - 62, y0: y0 - RAD - 84, x1: x1 + RAD + 84, y1: y1 + RAD + 66 };
       if (!W.userMoved) W.fit(); else apply();
       W.sync();
     };
+    /* Follow: when the whole machine would be too small to read, stay zoomed in at a readable size and keep the
+       camera on the head's state as the string moves, instead of shrinking everything to fit. */
+    function area() {
+      const w = svg.clientWidth, hh = svg.clientHeight;
+      if (!box || !w || !hh) return null;
+      const top = 52, k = Math.min(w / (box.x1 - box.x0), (hh - top) / (box.y1 - box.y0), 1.3);
+      return { w: w, hh: hh, top: top, k: k };
+    }
+    function followTarget(now, A) {
+      const m = app.machine, d = disp(), k = W.tf.k; let c = P[m.start];
+      if (d && d.anim && app.anim) { const p = ease(clamp((now - app.anim.t0) / app.anim.dur, 0, 1)), f = P[d.anim.step.state], t = P[d.anim.step.next]; if (f && t) c = { x: f.x + (t.x - f.x) * p, y: f.y + (t.y - f.y) * p }; }
+      else if (d && d.cur >= 0 && P[d.cur]) c = P[d.cur];
+      const hw = A.w / 2 / k, hv = (A.hh - A.top) / 2 / k, mid = (lo, hi, v, half) => hi - lo <= 2 * half ? (lo + hi) / 2 : clamp(v, lo + half, hi - half);
+      const cx = mid(box.x0, box.x1, c.x, hw), cy = mid(box.y0, box.y1, c.y, hv);
+      return { x: A.w / 2 - k * cx, y: A.top + (A.hh - A.top) / 2 - k * cy };
+    }
     W.fit = function () {
       W.userMoved = false;
-      const w = svg.clientWidth, hh = svg.clientHeight;
-      if (!box || !w || !hh) return;
-      const fl = document.querySelector('.float.tr'), bot = fl && fl.offsetHeight && fl.offsetLeft < 40 && fl.offsetTop > hh / 2 ? hh - fl.offsetTop - 14 : 0, top = bot ? 34 : 52, k = Math.min(w / (box.x1 - box.x0), (hh - top - bot) / (box.y1 - box.y0), 1.3);
-      W.tf = { k: k, x: w / 2 - k * (box.x0 + box.x1) / 2, y: top + (hh - top - bot) / 2 - k * (box.y0 + box.y1) / 2 };
+      const A = area(), fb = $('followBtn');
+      if (!A) return;
+      W.following = !!app.machine && (app.follow == null ? A.k < 0.62 : app.follow);
+      fb.hidden = !app.machine || (A.k >= 0.9 && !W.following); fb.setAttribute('aria-pressed', String(W.following));
+      if (W.following) { W.tf.k = Math.max(A.k, clamp(A.w / 480, 0.78, 1.1)); const t = followTarget(performance.now(), A); W.tf.x = t.x; W.tf.y = t.y; }
+      else W.tf = { k: A.k, x: A.w / 2 - A.k * (box.x0 + box.x1) / 2, y: A.top + (A.hh - A.top) / 2 - A.k * (box.y0 + box.y1) / 2 };
       apply();
     };
+    W.stopFollow = function () { if (W.following) { W.following = false; app.follow = false; $('followBtn').setAttribute('aria-pressed', 'false'); } };
     W.refit = function () { if (!W.userMoved) W.fit(); };
     function failD(from) { const m = app.machine, a = P[from], b = P[m.sink]; return 'M ' + a.x + ' ' + a.y + ' Q ' + ((a.x + b.x) / 2 + (a.x >= b.x ? 40 : -40)) + ' ' + (Math.max(a.y, b.y) - 10) + ' ' + b.x + ' ' + b.y; }
     W.sync = function () {
@@ -3459,10 +3024,11 @@ var TMApp = (function () {
       const fired = step && !toSink ? app.dmap[step.state][m.sigma.index.get(step.symbol)] : null;
       for (const id in W.edges) {
         const cl = W.edges[id].g.classList, isFired = fired !== null && String(fired) === id && app.highlight, onPath = !!d && app.highlight && d.trail.has(+id);
-        cl.toggle('fired', isFired); cl.toggle('trail', onPath); cl.toggle('sel', app.selSet.has(+id));
+        cl.toggle('fired', isFired); cl.toggle('trail', onPath); cl.toggle('sel', app.selSet.has(+id)); cl.toggle('peek', W.peek.has(W.edges[id].from));
         if ((isFired || onPath) && !W.edges[id].top) { W.edges[id].top = true; W.edges[id].g.parentNode.append(W.edges[id].g); } // draw the path above the rest
         else if (!isFired && !onPath) W.edges[id].top = false;
       }
+      for (const s in W.stubs) W.stubs[s].classList.toggle('on', W.peek.has(+s));
       const failFrom = toSink ? step.state : (d && d.halted && d.kind === 'no-transition' ? d.cur : -1);
       faildash.style.display = failFrom >= 0 ? 'block' : 'none';
       if (failFrom >= 0) faildash.setAttribute('d', failD(failFrom));
@@ -3470,16 +3036,21 @@ var TMApp = (function () {
     };
     W.frame = function (now) {
       if (!particle) return;
+      if (W.following && !W.userMoved && app.machine) {
+        const A = area();
+        if (A) { const t = followTarget(now, A), f = reduceMotion() ? 1 : 0.16, dx = t.x - W.tf.x, dy = t.y - W.tf.y; if (Math.abs(dx) + Math.abs(dy) > 0.4) { W.tf.x += dx * f; W.tf.y += dy * f; apply(); } }
+      }
       const a = app.anim;
       if (!a || !W.firedPath || !app.highlight) { particle.style.display = 'none'; return; }
       const p = clamp((now - a.t0) / a.dur, 0, 1), len = W.firedPath.getTotalLength(), pt = W.firedPath.getPointAtLength(ease(p) * len);
       particle.style.display = 'block'; particle.setAttribute('cx', pt.x); particle.setAttribute('cy', pt.y);
     };
     gestures(svg, {
-      drag(dx, dy) { W.userMoved = true; W.tf.x += dx; W.tf.y += dy; apply(); hideTip(); },
+      drag(dx, dy) { W.stopFollow(); W.userMoved = true; W.tf.x += dx; W.tf.y += dy; apply(); hideTip(); },
       zoom(f, cx, cy) {
         const r = svg.getBoundingClientRect(), px = cx - r.left, py = cy - r.top, k = clamp(W.tf.k * f, 0.15, 6), g = k / W.tf.k;
-        W.userMoved = true; W.tf.x = px - (px - W.tf.x) * g; W.tf.y = py - (py - W.tf.y) * g; W.tf.k = k; apply();
+        if (!W.following) W.userMoved = true;
+        W.tf.x = px - (px - W.tf.x) * g; W.tf.y = py - (py - W.tf.y) * g; W.tf.k = k; apply();
       },
       hover(e) {
         if (app.pinned >= 0 || app.selEdge >= 0 || !app.machine) return;
@@ -3490,8 +3061,9 @@ var TMApp = (function () {
       leave() { hideTip(); },
       click(e) {
         const at = document.elementFromPoint(e.clientX, e.clientY), t = at && at.closest ? at.closest('.state') : null, r = svg.getBoundingClientRect();
-        const ed = at && at.closest ? at.closest('.edge') : null;
-        if (t) { if (app.selEdge >= 0) hideTip(true); clickState(+t.dataset.state, e.clientX - r.left, e.clientY - r.top); }
+        const ed = at && at.closest ? at.closest('.edge') : null, stub = at && at.closest ? at.closest('.stub') : null;
+        if (stub) { const s = +stub.dataset.from; if (W.peek.has(s)) W.peek.delete(s); else W.peek.add(s); hideTip(true); W.sync(); }
+        else if (t) { if (app.selEdge >= 0) hideTip(true); clickState(+t.dataset.state, e.clientX - r.left, e.clientY - r.top); }
         else if (ed) clickEdge(+ed.dataset.edge, e.clientX - r.left, e.clientY - r.top);
         else hideTip(true);
       }
@@ -3575,15 +3147,14 @@ var TMApp = (function () {
 
   // ------------------------------------------------------------------ view switching, theme, misc UI
   function setView(v) {
-    if (v === '3d' && !view3d.ok) v = '2d';
+    if (v !== 'table') v = '2d';
     app.view = v;
     stage.className = 'v-' + v + (app.pin && v !== 'table' ? ' pin' : '') + (app.highlight ? '' : ' nohl');
-    $('view3d').style.display = v === '3d' ? '' : 'none';
     $('view2d').style.display = v === '2d' ? '' : 'none';
     $('pinLabel').style.display = v === 'table' ? 'none' : '';
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.view === v)));
     hideTip(true);
-    view3d.resize(); view2d.refit(); syncAll();
+    view2d.refit(); syncAll();
   }
   function setNotation(n) {
     app.notation = n;
@@ -3617,15 +3188,6 @@ var TMApp = (function () {
   }
   function setTheme(t) {
     document.documentElement.dataset.theme = t;
-    view3d.applyTheme();
-  }
-  function download(name, text) {
-    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })), a = h('a', { href: url, download: name });
-    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-  }
-  function exportText(kind) {
-    if (!app.machine) return '';
-    return kind === 'yaml' ? TM.exportYAML(app.machine, $('pattern').value, app.sim.input) : TM.exportMorphett(app.machine, $('pattern').value, app.sim.input, app.breakpoints);
   }
   function showPrompt(on) {
     $('promptModal').hidden = !on;
@@ -3681,26 +3243,15 @@ var TMApp = (function () {
     $('runAll').addEventListener('click', runBatch);
     document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
     $('pinTable').addEventListener('change', () => { app.pin = $('pinTable').checked; setView(app.view); });
-    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => {
-      if (app.view === '2d' || !view3d.ok) { view2d.fit(); return; }
-      view3d.setView(b.dataset.cam, true);
-    }));
+    document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { if (view2d.following) app.follow = false; view2d.fit(); }));
+    $('followBtn').addEventListener('click', () => { app.follow = !view2d.following; view2d.fit(); });
     $('denseBtn').addEventListener('click', () => setExpand(!app.expand));
+    $('foldBtn').addEventListener('click', () => { app.fold = !view2d.folding; hideTip(true); view2d.build(); syncAll(); });
     $('hlBtn').addEventListener('click', () => { app.highlight = !app.highlight; $('hlBtn').setAttribute('aria-pressed', String(app.highlight)); setView(app.view); });
     $('themeBtn').addEventListener('click', () => {
       const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       setTheme(cur === 'dark' ? 'light' : 'dark');
     });
-    if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'), f = () => view3d.applyTheme(); if (mq.addEventListener) mq.addEventListener('change', f); else if (mq.addListener) mq.addListener(f); }
-    const ex = $('exportBtn'), list = $('exportList');
-    const menu = on => { list.hidden = !on; ex.setAttribute('aria-expanded', String(on)); };
-    ex.addEventListener('click', e => { e.stopPropagation(); menu(list.hidden); });
-    list.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-      menu(false);
-      if (!app.machine) return;
-      download(b.dataset.export === 'yaml' ? 'machine.turingmachine-io.yaml' : 'machine.morphett.txt', exportText(b.dataset.export));
-    }));
-    document.addEventListener('click', () => menu(false));
     $('promptBtn').addEventListener('click', () => showPrompt(true));
     $('promptClose').addEventListener('click', () => showPrompt(false));
     $('promptModal').addEventListener('click', e => { if (e.target === $('promptModal')) showPrompt(false); });
@@ -3713,7 +3264,7 @@ var TMApp = (function () {
       TM.selfTests(api, line => { out.textContent += line + '\n'; out.scrollTop = out.scrollHeight; console.log(line); }).then(() => { $('selfTest').disabled = false; });
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { if (!$('help').hidden) showHelp(false); if (!$('promptModal').hidden) showPrompt(false); menu(false); hideTip(true); return; }
+      if (e.key === 'Escape') { if (!$('help').hidden) showHelp(false); if (!$('promptModal').hidden) showPrompt(false); hideTip(true); return; }
       const t = e.target, tag = t.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey || !$('help').hidden || !$('promptModal').hidden) return;
       const onButton = tag === 'BUTTON' || tag === 'SUMMARY' || tag === 'A';
@@ -3724,26 +3275,20 @@ var TMApp = (function () {
       else if (e.key === 'Enter' && !onButton && app.machine) loadString($('string').value);
       else if (e.key === '?') showHelp(true);
     });
-    if (window.ResizeObserver) new ResizeObserver(() => { view3d.resize(); view2d.refit(); syncTapeStrip(); }).observe($('viewport'));
-    window.addEventListener('resize', () => { view3d.resize(); view2d.refit(); syncTapeStrip(); });
-    if (narrowMQ) { if (narrowMQ.addEventListener) narrowMQ.addEventListener('change', relayout); else if (narrowMQ.addListener) narrowMQ.addListener(relayout); }
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => view3d.applyTheme());
+    if (window.ResizeObserver) new ResizeObserver(() => { view2d.refit(); syncTapeStrip(); }).observe($('viewport'));
+    window.addEventListener('resize', () => { view2d.refit(); syncTapeStrip(); });
   }
 
-  let last = performance.now();
   function loop(now) {
-    const dt = Math.min(80, now - last); last = now;
     tick(now);
-    if (app.view === '3d') view3d.frame(now, dt); else if (app.view === '2d') view2d.frame(now);
+    if (app.view === '2d') view2d.frame(now);
     requestAnimationFrame(loop);
   }
 
-  const api = { app, PRESETS, view3d, view2d, tableView, disp, setPattern, setString, loadString, loadPreset, stepForward, stepBack, reset, jump, advance, togglePlay,
-    runToEnd, toggleBreakpoint, setExpand, showPrompt, setView, setNotation, runBatch, traceRows, copyTrace, exportText, recompile, isHalted, tick };
+  const api = { app, PRESETS, view2d, tableView, disp, setPattern, setString, loadString, loadPreset, stepForward, stepBack, reset, jump, advance, togglePlay,
+    runToEnd, toggleBreakpoint, setExpand, showPrompt, setView, setNotation, runBatch, traceRows, copyTrace, recompile, isHalted, tick };
 
-  view3d.init();
   wire();
-  if (!view3d.ok) { setView('2d'); document.querySelector('[data-view="3d"]').disabled = true; document.querySelector('[data-view="3d"]').title = 'Three.js could not be loaded, so the 3D view is unavailable'; }
   loadPreset(START);
   setView(app.view);
   requestAnimationFrame(loop);
