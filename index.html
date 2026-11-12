@@ -36,7 +36,7 @@
   KEYBOARD
     Enter  Load the test string         →  Step            ←  Undo Step
     Space  Play / Pause                 R  Reset           ?  Help          Esc  close overlays
-    Diagram: drag to pan, wheel or pinch to zoom. Whole graph fits the machine in view; Follow stays
+    Diagram: drag to pan, wheel or pinch to zoom. Fit puts the whole machine in view; Follow stays
     zoomed in on the head's state. Fold returns draws fall-back arrows as short stubs (tap one to see them).
     Click a state (any view) to toggle a breakpoint. Highlight keeps the path followed so far lit;
     Per-symbol draws one edge per individual symbol instead of one per input class.
@@ -197,6 +197,12 @@ textarea#batch { width: 100%; min-height: 96px; resize: vertical; font: 14px/1.5
 .float.tl { top: 10px; left: 12px; } .float.tr { top: 10px; right: 12px; justify-content: flex-end; max-width: 60%; }
 .float.bl { bottom: 10px; left: 12px; font: 14px var(--mono); color: var(--muted); pointer-events: none; }
 .float .btn, .float .seg, .float label.chk { background: color-mix(in srgb, var(--panel) 88%, transparent); backdrop-filter: blur(6px); }
+.float.zoom { right: 12px; top: 50%; transform: translateY(-50%); flex-direction: column; flex-wrap: nowrap; }
+.float.zoom .btn { font-size: 18px; line-height: 1; height: 36px; }
+#growBtn { display: none; }
+.float.zoom .btn.fit { font-size: 13px; font-weight: 600; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+#stage.v-table #fitBtn { display: none; }
+#stage.v-table #zoomIn, #stage.v-table #zoomOut { display: none; }
 label.chk { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; cursor: pointer; }
 label.chk input { accent-color: var(--accent); margin: 0; }
 #tablePane { flex: 0 0 50%; min-height: 0; overflow: auto; background: var(--panel); border-top: 1px solid var(--line); display: none; }
@@ -321,6 +327,10 @@ table.delta tr.failrow th { color: var(--reject); }
   main { display: flex; flex-direction: column-reverse; }
   #stage { height: 50vh; height: 50svh; min-height: 300px; max-height: 620px; flex: none; position: sticky; top: 0; z-index: 4; border-bottom: 1px solid var(--line); box-shadow: 0 4px 10px rgba(0,0,0,.08); }
   .float.tl { top: 8px; left: 8px; }
+  .float.zoom { right: 8px; } .float.zoom .btn { width: 40px; height: 40px; min-height: 40px; padding: 0; font-size: 20px; }
+  .float.zoom .btn.fit { font-size: 13px; }
+  #growBtn { display: block; }
+  #stage.big { height: calc(100vh - 62px); height: calc(100svh - 62px - env(safe-area-inset-bottom, 0px)); max-height: none; }
   .float.tr { top: 8px; left: 112px; right: 0; max-width: none; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto; padding-right: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .float.tr::-webkit-scrollbar { display: none; }
   .float.tr .btn { flex: none; min-height: 38px; }
@@ -499,11 +509,16 @@ table.delta tr.failrow th { color: var(--reject); }
       <label class="chk" id="pinLabel"><input type="checkbox" id="pinTable" aria-label="Pin the table under the diagram"> Pin table</label>
     </div>
     <div class="float tr">
-      <button class="btn" data-cam="reset" aria-label="Whole graph: fit the entire machine in view" title="Fit the entire machine in view">Whole graph</button>
       <button class="btn" id="followBtn" aria-pressed="false" hidden aria-label="Follow: stay zoomed in and keep the current state in view" title="Stay zoomed in and keep the current state in view">Follow</button>
       <button class="btn" id="denseBtn" aria-pressed="false" aria-label="Per-symbol edges: draw one edge for every individual symbol instead of one per input class" title="Draw one edge per individual symbol (denser graph)">Per-symbol</button>
       <button class="btn" id="foldBtn" aria-pressed="false" hidden aria-label="Fold returns: draw arrows that fall back to an earlier state as short stubs" title="Draw arrows that fall back to an earlier state as short stubs">Fold returns</button>
       <button class="btn" id="hlBtn" aria-pressed="true" aria-label="Highlight: show or hide glow and labels">Highlight</button>
+    </div>
+    <div class="float zoom" role="group" aria-label="Graph size">
+      <button class="btn icon fit" data-cam="reset" id="fitBtn" aria-label="Fit the whole graph on screen" title="Fit the whole graph on screen">Fit</button>
+      <button class="btn icon" id="zoomIn" aria-label="Make the graph bigger" title="Bigger">+</button>
+      <button class="btn icon" id="zoomOut" aria-label="Make the graph smaller" title="Smaller">−</button>
+      <button class="btn icon" id="growBtn" aria-pressed="false" aria-label="Make the graph panel taller" title="Taller graph panel">⤢</button>
     </div>
     <div id="stageBadge"></div>
   </section>
@@ -523,7 +538,7 @@ table.delta tr.failrow th { color: var(--reject); }
           <tr><td><kbd>R</kbd></td><td>Reset</td></tr>
           <tr><td><kbd>?</kbd> <kbd>Esc</kbd></td><td>Open / close this help</td></tr>
         </table>
-        <p class="muted">Diagram: drag to pan, wheel or pinch to zoom. <b>Whole graph</b> fits the entire machine in view. <b>Follow</b> (switched on by itself when the machine is too big to read at full size) stays zoomed in and keeps the head’s state in view as the string moves. <b>Fold returns</b> (switched on by itself for busy machines) draws every arrow that falls back to an earlier state as a short stub such as “↩ q0” beside its state; a folded arrow is drawn in full while the string travels it, and tapping a stub shows that state’s folded arrows. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). In the 2D view a state is filled with the colour of the pattern piece that leads into it and drawn larger the more symbols it can accept; states the string has passed through get an amber ring. An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
+        <p class="muted">Diagram: drag to pan, wheel or pinch to zoom, or use the + and − buttons at its right edge. <b>Fit</b>, above them, puts the whole graph on screen; on a phone the ⤢ button under them makes the diagram panel fill the screen. <b>Follow</b> (switched on by itself when the machine is too big to read at full size) stays zoomed in and keeps the head’s state in view as the string moves. <b>Fold returns</b> (switched on by itself for busy machines) draws every arrow that falls back to an earlier state as a short stub such as “↩ q0” beside its state; a folded arrow is drawn in full while the string travels it, and tapping a stub shows that state’s folded arrows. Click a state in any view to toggle a breakpoint; Play pauses when the machine enters it. Every edge is drawn in the colour of the piece of the pattern that produces it (the same colour underlines that piece in the pattern box; grey edges come from more than one piece). In the 2D view a state is filled with the colour of the pattern piece that leads into it and drawn larger the more symbols it can accept; states the string has passed through get an amber ring. An arrow is drawn wider the more symbols it accepts, so a \d arrow (ten symbols) is visibly heavier than a single-character arrow. Click an edge to see its piece highlighted, or click a row of the token breakdown to emphasise the edges it produces. With Highlight on, every state and edge the string has passed through stays lit, so the whole path is visible. Per-symbol redraws the graph with one edge for each individual symbol (\d becomes ten edges, one per digit) instead of one edge per input class.</p>
         <h2>The machine</h2>
         <p>Your pattern is compiled to the minimal DFA and shown as a Turing machine. Other simulators leave three choices open; this one fixes them:</p>
         <ul>
@@ -921,6 +936,8 @@ FOLLOW-UP REQUESTS (given in conversation after the first build, in order)
 9. The test string needs to be above the pattern so we can see what we are solving for.
 
 10. No need for the 3D render. No need for export. The TODO comments preset and others are not readable: come up with a rendering that makes them readable. (Result: the 3D view, Three.js and the export menu were removed; arrows that fall back to an earlier state fold into short “↩ q0” stubs; Follow keeps a readable zoom centred on the head's state.)
+
+11. Add a button to resize the graph. (Result: a Fit button that puts the whole graph on screen, + and − buttons on the diagram, plus a ⤢ button on phones that makes the diagram panel fill the screen.)
 
 
 ==========================================================================
@@ -2307,7 +2324,7 @@ TM.selfTests = async function (ui, log) {
       ui.view2d.frame(performance.now());
       ok(ui.view2d.following && tf.k === k0, 'Follow: stays on while stepping and keeps its zoom');
       document.querySelector('[data-cam="reset"]').click();
-      ok(!ui.view2d.following, 'Whole graph switches Follow off');
+      ok(!ui.view2d.following, 'Fit switches Follow off');
 
       // batch
       ui.setPattern(SSN);
@@ -2980,8 +2997,9 @@ var TMApp = (function () {
     /* Follow: when the whole machine would be too small to read, stay zoomed in at a readable size and keep the
        camera on the head's state as the string moves, instead of shrinking everything to fit. */
     function area() {
-      const w = svg.clientWidth, hh = svg.clientHeight;
-      if (!box || !w || !hh) return null;
+      const full = svg.clientWidth, hh = svg.clientHeight, zc = document.querySelector('.float.zoom');
+      if (!box || !full || !hh) return null;
+      const w = full - (zc && zc.offsetWidth ? zc.offsetWidth + 12 : 0); // keep clear of the button column on the right
       const top = 52, k = Math.min(w / (box.x1 - box.x0), (hh - top) / (box.y1 - box.y0), 1.3);
       return { w: w, hh: hh, top: top, k: k };
     }
@@ -3005,6 +3023,12 @@ var TMApp = (function () {
     };
     W.stopFollow = function () { if (W.following) { W.following = false; app.follow = false; $('followBtn').setAttribute('aria-pressed', 'false'); } };
     W.refit = function () { if (!W.userMoved) W.fit(); };
+    function zoomAt(f, cx, cy) {
+      const r = svg.getBoundingClientRect(), px = cx - r.left, py = cy - r.top, k = clamp(W.tf.k * f, 0.15, 6), g = k / W.tf.k;
+      if (!W.following) W.userMoved = true;
+      W.tf.x = px - (px - W.tf.x) * g; W.tf.y = py - (py - W.tf.y) * g; W.tf.k = k; apply();
+    }
+    W.zoomBy = function (f) { const r = svg.getBoundingClientRect(); if (root && r.width) { zoomAt(f, r.left + r.width / 2, r.top + r.height / 2); hideTip(); } };
     function failD(from) { const m = app.machine, a = P[from], b = P[m.sink]; return 'M ' + a.x + ' ' + a.y + ' Q ' + ((a.x + b.x) / 2 + (a.x >= b.x ? 40 : -40)) + ' ' + (Math.max(a.y, b.y) - 10) + ' ' + b.x + ' ' + b.y; }
     W.sync = function () {
       const m = app.machine, d = disp();
@@ -3047,11 +3071,7 @@ var TMApp = (function () {
     };
     gestures(svg, {
       drag(dx, dy) { W.stopFollow(); W.userMoved = true; W.tf.x += dx; W.tf.y += dy; apply(); hideTip(); },
-      zoom(f, cx, cy) {
-        const r = svg.getBoundingClientRect(), px = cx - r.left, py = cy - r.top, k = clamp(W.tf.k * f, 0.15, 6), g = k / W.tf.k;
-        if (!W.following) W.userMoved = true;
-        W.tf.x = px - (px - W.tf.x) * g; W.tf.y = py - (py - W.tf.y) * g; W.tf.k = k; apply();
-      },
+      zoom(f, cx, cy) { zoomAt(f, cx, cy); },
       hover(e) {
         if (app.pinned >= 0 || app.selEdge >= 0 || !app.machine) return;
         const t = e.target.closest ? e.target.closest('.state, .edge') : null, r = svg.getBoundingClientRect();
@@ -3149,7 +3169,7 @@ var TMApp = (function () {
   function setView(v) {
     if (v !== 'table') v = '2d';
     app.view = v;
-    stage.className = 'v-' + v + (app.pin && v !== 'table' ? ' pin' : '') + (app.highlight ? '' : ' nohl');
+    stage.className = 'v-' + v + (app.pin && v !== 'table' ? ' pin' : '') + (app.highlight ? '' : ' nohl') + (app.big ? ' big' : '');
     $('view2d').style.display = v === '2d' ? '' : 'none';
     $('pinLabel').style.display = v === 'table' ? 'none' : '';
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.view === v)));
@@ -3244,6 +3264,9 @@ var TMApp = (function () {
     document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
     $('pinTable').addEventListener('change', () => { app.pin = $('pinTable').checked; setView(app.view); });
     document.querySelectorAll('[data-cam]').forEach(b => b.addEventListener('click', () => { if (view2d.following) app.follow = false; view2d.fit(); }));
+    $('zoomIn').addEventListener('click', () => view2d.zoomBy(1.3));
+    $('zoomOut').addEventListener('click', () => view2d.zoomBy(1 / 1.3));
+    $('growBtn').addEventListener('click', () => { const on = !stage.classList.contains('big'); app.big = on; stage.classList.toggle('big', on); $('growBtn').setAttribute('aria-pressed', String(on)); $('growBtn').textContent = on ? '⤡' : '⤢'; if (on && stage.scrollIntoView) stage.scrollIntoView({ block: 'start' }); });
     $('followBtn').addEventListener('click', () => { app.follow = !view2d.following; view2d.fit(); });
     $('denseBtn').addEventListener('click', () => setExpand(!app.expand));
     $('foldBtn').addEventListener('click', () => { app.fold = !view2d.folding; hideTip(true); view2d.build(); syncAll(); });
