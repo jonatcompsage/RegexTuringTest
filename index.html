@@ -395,6 +395,31 @@ table.delta tr.failrow th { color: var(--reject); }
 
 <main>
   <aside id="left" aria-label="Pattern, test string and trace">
+    <section class="card" aria-labelledby="hStr">
+      <h2 id="hStr">Test string</h2>
+      <div class="sbox" style="margin-top:8px">
+        <div class="pbox plain" id="strBox"><div class="pfield"><div class="mirror" id="strMirror" aria-hidden="true"></div>
+          <input id="string" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Test string to write on the tape"></div></div>
+        <button id="loadBtn" class="btn primary" aria-label="Load the string onto the tape (Enter)" title="Enter">Load</button>
+      </div>
+      <p class="hint">The whole string must be consumed and end in an accepting state. This is acceptance by a machine, not a search: unlike grep, a match somewhere inside the string does not count.</p>
+      <div class="chips" id="chips"></div>
+      <div class="controls">
+        <button id="backBtn" class="btn" aria-label="Undo Step (left arrow)" title="←">◂ Undo Step</button>
+        <button id="stepBtn" class="btn" aria-label="Step (right arrow)" title="→">Step ▸</button>
+        <button id="playBtn" class="btn primary" aria-label="Play or pause (space)" title="Space">▶ Play</button>
+        <button id="resetBtn" class="btn" aria-label="Reset to the start of the string (R)" title="R">Reset</button>
+        <button id="runBtn" class="btn" aria-label="Run at full speed to the end or the next breakpoint" title="Run at full speed">Run ⏭</button>
+      </div>
+      <label class="speed" for="speed">Speed
+        <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" aria-label="Playback speed, 0.25 to 4 times">
+        <output id="speedOut" for="speed">1×</output>
+      </label>
+      <div id="counter" aria-label="Step counter"></div>
+      <div id="verdict" class="badge"></div>
+      <div id="whyRow" hidden style="margin-top:6px"><button id="whyBtn" class="link" aria-expanded="false" aria-label="Why was the string rejected?">Why?</button><p id="whyText" hidden></p></div>
+    </section>
+
     <section class="card" aria-labelledby="hPat">
       <div class="row between">
         <h2 id="hPat">Pattern</h2>
@@ -446,31 +471,6 @@ table.delta tr.failrow th { color: var(--reject); }
       </div>
       <pre class="out" id="tuples"></pre>
       <p class="hint">Format: &lt;state&gt; &lt;read&gt; &lt;write&gt; &lt;direction&gt; &lt;next&gt;, as on morphett.info. Write always equals read because this machine never writes; _ is the blank. The table is generated from the pattern and cannot be edited.</p></div></details>
-
-    <section class="card" aria-labelledby="hStr">
-      <h2 id="hStr">Test string</h2>
-      <div class="sbox" style="margin-top:8px">
-        <div class="pbox plain" id="strBox"><div class="pfield"><div class="mirror" id="strMirror" aria-hidden="true"></div>
-          <input id="string" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Test string to write on the tape"></div></div>
-        <button id="loadBtn" class="btn primary" aria-label="Load the string onto the tape (Enter)" title="Enter">Load</button>
-      </div>
-      <p class="hint">The whole string must be consumed and end in an accepting state. This is acceptance by a machine, not a search: unlike grep, a match somewhere inside the string does not count.</p>
-      <div class="chips" id="chips"></div>
-      <div class="controls">
-        <button id="backBtn" class="btn" aria-label="Undo Step (left arrow)" title="←">◂ Undo Step</button>
-        <button id="stepBtn" class="btn" aria-label="Step (right arrow)" title="→">Step ▸</button>
-        <button id="playBtn" class="btn primary" aria-label="Play or pause (space)" title="Space">▶ Play</button>
-        <button id="resetBtn" class="btn" aria-label="Reset to the start of the string (R)" title="R">Reset</button>
-        <button id="runBtn" class="btn" aria-label="Run at full speed to the end or the next breakpoint" title="Run at full speed">Run ⏭</button>
-      </div>
-      <label class="speed" for="speed">Speed
-        <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" aria-label="Playback speed, 0.25 to 4 times">
-        <output id="speedOut" for="speed">1×</output>
-      </label>
-      <div id="counter" aria-label="Step counter"></div>
-      <div id="verdict" class="badge"></div>
-      <div id="whyRow" hidden style="margin-top:6px"><button id="whyBtn" class="link" aria-expanded="false" aria-label="Why was the string rejected?">Why?</button><p id="whyText" hidden></p></div>
-    </section>
 
     <section class="card" aria-labelledby="hTrace">
       <div class="row between"><h2 id="hTrace">Trace</h2><button id="copyTrace" class="btn" aria-label="Copy the trace as tab-separated text">Copy trace</button></div>
