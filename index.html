@@ -356,6 +356,15 @@ table.rules tr.trail td:first-child { box-shadow: inset 3px 0 0 var(--path); }
   table.rules td.why { min-width: 120px; font-size: 12.5px; }
 }
 #stage.v-table #tablePane::before { content: ""; position: sticky; top: 0; display: block; height: 54px; margin-top: -54px; background: var(--bg); z-index: 3; }
+
+.legend li.cap { grid-column: 1 / -1; margin-top: 3px; padding-top: 4px; border-top: 1px solid var(--line); color: var(--ink); }
+#guide { list-style: none; margin: 8px 0 0; padding: 0; }
+#guide button { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 1px 8px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 6px; padding: 5px 6px; cursor: pointer; font-size: 14px; }
+#guide button:hover { background: var(--soft); }
+#guide b { font: 600 14px var(--mono); }
+#guide button span:last-child { grid-column: 2; color: var(--muted); }
+
+.legend li.cap { border-top: 0; margin: 0; padding: 0; }
 </style>
 </head>
 <body>
@@ -398,6 +407,10 @@ table.rules tr.trail td:first-child { box-shadow: inset 3px 0 0 var(--path); }
       <h2 id="hNow">What the machine is doing</h2>
       <div id="nowBody" style="margin-top:8px"></div>
     </section>
+
+    <details class="card" id="dGuide" open><summary>What the state names mean</summary><div class="body">
+      <p class="hint" style="margin-top:0">A state is named after what the machine has just read, because that is all it remembers. “after (” means the last symbol was an opening parenthesis; “in [ ] after a-” means it is inside a character class and has just read a symbol and a dash. Click a name to show that state’s arrows in the graph.</p>
+      <ul id="guide"></ul></div></details>
 
     <details class="card" id="dGrammar"><summary>Grammar it decides</summary><div class="body">
 <pre class="ebnf">regex      = alt
@@ -486,7 +499,8 @@ metachar   = . * + ? ( ) [ ] { } | \ ^ $ - /</pre>
         <h2>Reading the 3D graph</h2>
         <ul>
           <li>Each ball is a state; its colour is the job it does (key at the bottom left). The yellow ball is the current state.</li>
-          <li>Arrow labels read <span class="mono">read → write, move</span>. “other” means every symbol the state does not list. To keep the graph readable, only the current state’s arrows are labelled; click a state to see its arrows, or switch on <b>All labels</b>.</li>
+          <li>The symbol goes on the arrow. Each arrow label says what the head reads, what it writes if it changes the cell, and which way it moves: <span class="mono">read ( · write ⟨ · move R</span>. “anything else” means every symbol the state does not list. To keep the graph readable, only the current state’s arrows are labelled; click a state (or its name in the left column) to see its arrows, or switch on <b>All labels</b>.</li>
+          <li>A state is named after what the machine has just read: “after (”, “got an atom”, “in [ ] after a-”. The list in the left column explains each one.</li>
           <li>The thick yellow arrow is the rule about to fire. Arrows already used stay amber.</li>
           <li>Arrows into REJECT are hidden until one fires (there are a great many); <b>Reject arrows</b> shows them all.</li>
           <li>Drag to turn, wheel or pinch to zoom, right-drag, Shift-drag or two fingers to slide. <b>Fit</b> shows everything; <b>Follow</b> keeps the camera near the current state; <b>Spin</b> turns the graph slowly, which makes the depth easier to see.</li>
@@ -537,8 +551,9 @@ Out of scope, and say so in the help: semantic checks such as [z-a] or a{5,2}.
 
 2. The machine
 It must be a real Turing machine, not a parser dressed up as one: a finite table δ(state, symbol) = (state, symbol, L/R), one tape infinite in both directions, tape alphabet Γ = Σ ∪ { ⊔, •, ⟨, ⟩ }. Nesting is not regular, so it works in two passes.
-Pass 1 (one sweep right, a finite automaton's worth of work): states START, ALT, OPEN, OPEN?, GROUP (a piece must come next); ATOM, QUANT, LAZY, ANCHOR (just read a piece); ESC; REP {, REP n, REP m (repeat counts); CLASS, CLASS^, ITEM, DASH, RANGE, SET, SET-, C-ESC, R-ESC (character classes). Parentheses that are literals (escaped, or inside a class) are overwritten with • so pass 2 ignores them. On the blank after the input the head turns around.
-Pass 2 (zigzag, uses the tape as memory): FIND ( walks left to the rightmost unpaired "(" and writes ⟨; FIND ) walks right to the first unpaired ")" and writes ⟩; repeat. FIND ) reaching the blank rejects (unclosed group). When FIND ( reaches the left blank, SWEEP walks right: a ")" still on the tape rejects, the blank accepts.
+Name every state after what the machine has just read, so a student can read the name without a glossary, and list the names with one-line meanings in the page.
+Pass 1 (one sweep right, a finite automaton's worth of work): START, "after |", "after (", "after (?", "after (?:" (a piece must come next); "got an atom", "got a quantifier", "got a lazy ?", "got ^ or $" (just read a piece); "after \"; "after {", "in {n", "in {n," (repeat counts); nine character-class states from "after [" to "in [ ] after a-\". Parentheses that are literals (escaped, or inside a class) are overwritten with • so pass 2 ignores them. On the blank after the input the head turns around.
+Pass 2 (zigzag, uses the tape as memory): "← find (" walks left to the rightmost unpaired "(" and writes ⟨; "find ) →" walks right to the first unpaired ")" and writes ⟩; repeat. "find ) →" reaching the blank rejects (unclosed group). When "← find (" reaches the left blank, "final check" walks right: a ")" still on the tape rejects, the blank accepts.
 27 states including ACCEPT and REJECT. Every rejecting rule carries a plain-language reason. The machine must halt on every input.
 
 3. Correctness
@@ -546,7 +561,7 @@ Write a separate recursive-descent recognizer for the same grammar and compare t
 
 4. The page
 Left column: the string input (typing reloads the tape; dropping text anywhere on the page writes it on the tape and starts playing), Undo / Step / Play / Reset / Run, speed 0.25× to 16×, the verdict with its reason and the offending symbol underlined; a "What the machine is doing" card (current state, its job, the rule about to fire as δ(q, a) = (q', b, D), and why); the grammar; the formal 7-tuple; a trace table (click a row to jump there); a batch checker, one string per line.
-Right: the state graph in 3D (Three.js), because 27 states and over a hundred arrows are too dense for a flat drawing. States are balls coloured by job and placed by hand in layers: the main pass-1 states in the middle plane, character-class states behind, repeat-count states in front, pass-2 states to the right, REJECT below. Keep it readable: only the current state's arrows are labelled (read → write, move); the rule about to fire is a thick yellow arrow; used arrows stay amber; arrows into REJECT are hidden until one fires. Toggles: Follow (camera stays near the current state), Spin, All labels, Reject arrows. Fit, zoom in, zoom out. Drag to turn, wheel or pinch to zoom, right-drag or two fingers to slide. Click a state for its rules.
+Right: the state graph in 3D (Three.js), because 27 states and over a hundred arrows are too dense for a flat drawing. States are balls coloured by job and placed by hand in layers: the main pass-1 states in the middle plane, character-class states behind, repeat-count states in front, pass-2 states to the right, REJECT below. Keep it readable: the symbol goes on the arrow, spelled out as "read ( · write ⟨ · move R"; only the current state's arrows are labelled; the rule about to fire is a thick yellow arrow; used arrows stay amber; arrows into REJECT are hidden until one fires. Toggles: Follow (camera stays near the current state), Spin, All labels, Reject arrows. Fit, zoom in, zoom out. Drag to turn, wheel or pinch to zoom, right-drag or two fingers to slide. Click a state for its rules.
 Under the graph: the tape, with the head, written cells in a distinct colour, and a pass indicator. A Table view lists δ as text and highlights the current state and the rule about to fire; it is also the fallback when WebGL is missing.
 Light and dark themes, keyboard shortcuts (→ ← Space R ? Esc), reduced-motion support, and a phone layout: graph pinned on top, panels scrolling beneath, transport bar fixed at the bottom, Follow on by default.
 
@@ -556,6 +571,7 @@ Light and dark themes, keyboard shortcuts (→ ← Space R ? Esc), reduced-motio
 3. Make it work on a phone; put the test string above the pattern; drop the 3D view and export; add Fit and zoom buttons.
 4. "Modify this so that it is a Turing machine that validates any regular expression sequence based on the regex grammar. No need for individual ones; the idea is that you drop a string sequence on it and the Turing machine accepts or rejects it. This one is going to have to be 3D because it's a pretty dense graph."
 The earlier per-pattern simulator is kept beside this page as regex-to-machine.html.
+5. "I don't understand all the state names, and does the symbol go on the transition line or not?" States were renamed after what the machine has just read, a list of meanings was added, and arrow labels were spelled out.
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js" crossorigin="anonymous"></script>
 <script>
@@ -621,7 +637,7 @@ var RTM = (function () {
   }
   function escape(setRule, litTo) {
     return [setRule,
-      r('tn' + META_NP, litTo, { label: 't n metachar', note: 'An escaped tab, newline or metacharacter is one literal symbol.' }),
+      r('tn' + META_NP, litTo, { label: 't n or a metachar', note: 'An escaped tab, newline or metacharacter is one literal symbol.' }),
       r('()', litTo, { write: SHIELD, note: 'An escaped parenthesis is a literal. Overwrite it with • so pass 2 does not count it.' }),
       rej('bB', 'Word boundaries (\\b, \\B) are not in this grammar.'),
       rej('123456789', 'Backreferences (\\1 … \\9) are not regular, so they are not in this grammar.'),
@@ -632,84 +648,84 @@ var RTM = (function () {
 
   // ---- pass 1: one sweep to the right; everything a finite memory can check ----
   st('START', 'START', 'expect', 'Start of the pattern. A piece must come first.',
-    expect('“)” with no group open.', 'The pattern is empty.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-11, 0, 0]);
-  st('ALT', 'ALT', 'expect', 'Just read “|”. The next alternative must start with a piece.',
-    expect('Empty alternative: nothing between “|” and “)”.', 'Empty alternative: the pattern ends with “|”.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-5.5, 2.2, 2.5]);
-  st('OPEN', 'OPEN', 'expect', 'Just read “(”. A piece must follow, or “?:” to make the group non-capturing.',
-    expect('Empty group “()”.', 'Unclosed group: the pattern ends right after “(”.', true), oth('ATOM', 'An ordinary symbol is an atom.'), [-5.5, -2.6, 2.5]);
-  st('OPENQ', 'OPEN?', 'expect', 'Just read “(?”. Only “:” may follow.',
+    expect('“)” with no group open.', 'The pattern is empty.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-20, 0, 0]);
+  st('ALT', 'after |', 'expect', 'Just read “|”. The next alternative must start with a piece.',
+    expect('Empty alternative: nothing between “|” and “)”.', 'Empty alternative: the pattern ends with “|”.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-9, 5, 3]);
+  st('OPEN', 'after (', 'expect', 'Just read “(”. A piece must follow, or “?:” to make the group non-capturing.',
+    expect('Empty group “()”.', 'Unclosed group: the pattern ends right after “(”.', true), oth('ATOM', 'An ordinary symbol is an atom.'), [-9, -4, 3]);
+  st('OPENQ', 'after (?', 'expect', 'Just read “(?”. Only “:” may follow.',
     [r(':', 'GROUP', { note: '“(?:” is a non-capturing group.' }), rej(BLANK, 'The pattern ends inside “(?”.')],
-    oth('REJ', 'Only “(?:” is supported: no lookarounds, named groups or flags.'), [-8.5, -5.6, 1]);
-  st('GROUP', 'GROUP', 'expect', 'Just read “(?:”. A piece must follow.',
-    expect('Empty group “(?:)”.', 'Unclosed group: the pattern ends right after “(?:”.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-4, -6.6, -1.5]);
-  st('ATOM', 'ATOM', 'after', 'Just finished an atom (a symbol, class, escape or closed group). It may be repeated.',
+    oth('REJ', 'Only “(?:” is supported: no lookarounds, named groups or flags.'), [-15, -9, 0]);
+  st('GROUP', 'after (?:', 'expect', 'Just read “(?:”. A piece must follow.',
+    expect('Empty group “(?:)”.', 'Unclosed group: the pattern ends right after “(?:”.'), oth('ATOM', 'An ordinary symbol is an atom.'), [-7, -11, -3]);
+  st('ATOM', 'got an atom', 'after', 'Just finished an atom (a symbol, class, escape or closed group). It may be repeated.',
     after([r('*+?', 'QUANT', { note: 'A quantifier repeats the atom before it.' }), r('{', 'REP1', { note: 'A counted repeat starts.' })]),
     oth('ATOM', 'An ordinary symbol is an atom.'), [0, 0, 0]);
-  st('QUANT', 'QUANT', 'after', 'Just read a quantifier. Only a lazy “?” may be added to it.',
+  st('QUANT', 'got a quantifier', 'after', 'Just read a quantifier. Only a lazy “?” may be added to it.',
     after([r('?', 'LAZY', { note: 'A “?” after a quantifier makes it lazy.' }), rej('*+{', 'Nothing to repeat: a quantifier cannot follow another quantifier.')]),
-    oth('ATOM', 'An ordinary symbol is an atom.'), [5, 1.6, 2.5]);
-  st('LAZY', 'LAZY', 'after', 'Just read a lazy quantifier such as “*?”. No further quantifier is allowed.',
+    oth('ATOM', 'An ordinary symbol is an atom.'), [9, 4, 4]);
+  st('LAZY', 'got a lazy ?', 'after', 'Just read a lazy quantifier such as “*?”. No further quantifier is allowed.',
     after([rej('*+?{', 'Nothing to repeat: the quantifier is already complete.')]),
-    oth('ATOM', 'An ordinary symbol is an atom.'), [8.6, 3.6, 0.5]);
-  st('ANCHOR', 'ANCHOR', 'after', 'Just read an anchor (^ or $). An anchor cannot be repeated.',
+    oth('ATOM', 'An ordinary symbol is an atom.'), [15, 8, 0]);
+  st('ANCHOR', 'got ^ or $', 'after', 'Just read an anchor (^ or $). An anchor cannot be repeated.',
     after([rej('*+?{', 'An anchor cannot be repeated.')]),
-    oth('ATOM', 'An ordinary symbol is an atom.'), [4.8, -3.2, 2.5]);
-  st('ESC', 'ESC', 'esc', 'Just read “\\”. The next symbol must make a known escape.',
+    oth('ATOM', 'An ordinary symbol is an atom.'), [8, -5, 4]);
+  st('ESC', 'after \\', 'esc', 'Just read “\\”. The next symbol must make a known escape.',
     escape(r('dDwWsS', 'ATOM', { note: 'A set escape (digits, word characters, spaces or their complements) is an atom.' }), 'ATOM'),
-    oth('REJ', W_ESC), [0.5, -4.8, 4.5]);
-  st('REP1', 'REP {', 'count', 'Just read “{”. A count must start with a digit.',
+    oth('REJ', W_ESC), [-1, -8, 7]);
+  st('REP1', 'after {', 'count', 'Just read “{”. A count must start with a digit.',
     [r('0123456789', 'REP2'), rej(BLANK, 'Unclosed repeat count: the input ended before “}”.')],
-    oth('REJ', '“{” must start a repeat count such as {3}, {2,} or {2,5}. Write \\{ for a literal brace.'), [3.4, -8.6, 1.5]);
-  st('REP2', 'REP n', 'count', 'Reading the digits of n in {n}, {n,} or {n,m}.',
+    oth('REJ', '“{” must start a repeat count such as {3}, {2,} or {2,5}. Write \\{ for a literal brace.'), [4, -12, 2]);
+  st('REP2', 'in {n', 'count', 'Reading the digits of n in {n}, {n,} or {n,m}.',
     [r('0123456789', 'REP2'), r(',', 'REP3'), r('}', 'QUANT', { note: 'The counted repeat is complete; it behaves like any other quantifier.' }), rej(BLANK, 'Unclosed repeat count: the input ended before “}”.')],
-    oth('REJ', 'Only digits, “,” and “}” may appear in a repeat count.'), [7.2, -9.6, 2.5]);
-  st('REP3', 'REP m', 'count', 'After the comma in {n,m}: optional digits of m, then “}”.',
+    oth('REJ', 'Only digits, “,” and “}” may appear in a repeat count.'), [10, -13, 5]);
+  st('REP3', 'in {n,', 'count', 'After the comma in {n,m}: optional digits of m, then “}”.',
     [r('0123456789', 'REP3'), r('}', 'QUANT', { note: 'The counted repeat is complete; it behaves like any other quantifier.' }), rej(BLANK, 'Unclosed repeat count: the input ended before “}”.')],
-    oth('REJ', 'Only digits and “}” may follow the comma in a repeat count.'), [10, -6.4, 0.5]);
+    oth('REJ', 'Only digits and “}” may follow the comma in a repeat count.'), [15, -9, 0]);
 
-  st('C0', 'CLASS', 'cls', 'Just read “[”. A “^” here negates the class; a “]” here is a literal.',
+  st('C0', 'after [', 'cls', 'Just read “[”. A “^” here negates the class; a “]” here is a literal.',
     [r('^', 'C1', { note: 'The class is negated.' }), r('\\', 'CESC'), r('()', 'CLIT', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CLIT', 'A literal member (a “]” in first place is a literal too).'), [-6, 6.4, -4]);
-  st('C1', 'CLASS^', 'cls', 'Just read “[^”. A “]” here is still a literal.',
+    oth('CLIT', 'A literal member (a “]” in first place is a literal too).'), [-10, 11, -7]);
+  st('C1', 'after [^', 'cls', 'Just read “[^”. A “]” here is still a literal.',
     [r('\\', 'CESC'), r('()', 'CLIT', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CLIT', 'A literal member (a “]” in first place is a literal too).'), [-9.6, 9, -5.5]);
-  st('CLIT', 'ITEM', 'cls', 'Inside a class, after a literal member. A “-” may turn it into a range.',
+    oth('CLIT', 'A literal member (a “]” in first place is a literal too).'), [-17, 15, -9]);
+  st('CLIT', 'in [ ] after a symbol', 'cls', 'Inside a class, after a literal member. A “-” may turn it into a range.',
     [r(']', 'ATOM', { note: 'The class closes; the whole class is one atom.' }), r('-', 'CDASH'), r('\\', 'CESC'), r('()', 'CLIT', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CLIT', 'Another literal member.'), [-2, 9.4, -6.5]);
-  st('CDASH', 'DASH', 'cls', 'Inside a class, after “member-”. The next member ends the range; a “]” makes the dash a literal.',
+    oth('CLIT', 'Another literal member.'), [-4, 16, -11]);
+  st('CDASH', 'in [ ] after a-', 'cls', 'Inside a class, after “member-”. The next member ends the range; a “]” makes the dash a literal.',
     [r(']', 'ATOM', { note: 'The class closes; the dash was a literal.' }), r('\\', 'RESC'), r('()', 'CDONE', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CDONE', 'The range is complete.'), [2.6, 11.2, -5]);
-  st('CDONE', 'RANGE', 'cls', 'Inside a class, after a complete range such as a-z. A “-” here is a literal member.',
+    oth('CDONE', 'The range is complete.'), [4, 19, -8]);
+  st('CDONE', 'in [ ] after a-z', 'cls', 'Inside a class, after a complete range such as a-z. A “-” here is a literal member.',
     [r(']', 'ATOM', { note: 'The class closes; the whole class is one atom.' }), r('\\', 'CESC'), r('()', 'CLIT', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CLIT', 'A literal member.'), [5.8, 8.2, -6.5]);
-  st('CSET', 'SET', 'cls', 'Inside a class, after a set escape such as \\d. A set cannot start a range.',
+    oth('CLIT', 'A literal member.'), [10, 14, -11]);
+  st('CSET', 'in [ ] after \\d', 'cls', 'Inside a class, after a set escape such as \\d. A set cannot start a range.',
     [r(']', 'ATOM', { note: 'The class closes; the whole class is one atom.' }), r('-', 'CSETD'), r('\\', 'CESC'), r('()', 'CLIT', { write: SHIELD, note: SHIELD_NOTE }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('CLIT', 'A literal member.'), [1.6, 6.2, -8]);
-  st('CSETD', 'SET-', 'cls', 'Inside a class, after a set escape and “-”. Only “]” may follow (the dash is then a literal).',
+    oth('CLIT', 'A literal member.'), [3, 11, -13]);
+  st('CSETD', 'in [ ] after \\d-', 'cls', 'Inside a class, after a set escape and “-”. Only “]” may follow (the dash is then a literal).',
     [r(']', 'ATOM', { note: 'The class closes; the dash was a literal.' }), rej(BLANK, W_UNCLOSED_CLS)],
-    oth('REJ', 'A set escape such as \\d cannot start a range.'), [6.4, 5.4, -4]);
-  st('CESC', 'C-ESC', 'cls', 'Inside a class, just read “\\”.',
+    oth('REJ', 'A set escape such as \\d cannot start a range.'), [11, 9, -6]);
+  st('CESC', 'in [ ] after \\', 'cls', 'Inside a class, just read “\\”.',
     escape(r('dDwWsS', 'CSET', { note: 'A set escape adds a whole set to the class.' }), 'CLIT'),
-    oth('REJ', W_ESC), [-4.6, 12.6, -8]);
-  st('RESC', 'R-ESC', 'cls', 'Inside a class, just read “\\” where a range must end.',
+    oth('REJ', W_ESC), [-9, 21, -13]);
+  st('RESC', 'in [ ] after a-\\', 'cls', 'Inside a class, just read “\\” where a range must end.',
     escape(rej('dDwWsS', 'A set escape such as \\d cannot end a range.'), 'CDONE'),
-    oth('REJ', W_ESC), [7.2, 11.8, -8]);
+    oth('REJ', W_ESC), [12, 20, -13]);
 
   // ---- pass 2: zigzag; needs the tape as memory, because nesting depth has no bound ----
-  st('FINDL', 'FIND (', 'match', 'Pass 2. Walk left to the nearest “(” that has no partner yet.',
+  st('FINDL', '← find (', 'match', 'Pass 2. Walk left to the nearest “(” that has no partner yet.',
     [r('(', 'FINDR', { write: LM, move: 'R', note: 'The rightmost unpaired “(”. Mark it ⟨ and go looking for its “)”.' }),
       r(BLANK, 'SWEEP', { move: 'R', note: 'Left end reached: every “(” has a partner. Check for a leftover “)”.' })],
-    { to: 'FINDL', move: 'L', write: null, why: 'Not an unpaired “(”: keep walking left.' }, [13, 0.5, 0]);
-  st('FINDR', 'FIND )', 'match', 'Pass 2. Walk right to the first “)” that has no partner yet.',
+    { to: 'FINDL', move: 'L', write: null, why: 'Not an unpaired “(”: keep walking left.' }, [20, 1, 0]);
+  st('FINDR', 'find ) →', 'match', 'Pass 2. Walk right to the first “)” that has no partner yet.',
     [r(')', 'FINDL', { write: RM, move: 'L', note: 'Its partner. Mark it ⟩ and go back for the next “(”.' }),
       rej(BLANK, 'Unclosed group: this “(” has no matching “)”.')],
-    oth('FINDR', 'Not an unpaired “)”: keep walking right.'), [16.6, 3.8, 1.5]);
-  st('SWEEP', 'SWEEP', 'match', 'Pass 2, last sweep. Any “)” still on the tape has no partner.',
+    oth('FINDR', 'Not an unpaired “)”: keep walking right.'), [26, 7, 3]);
+  st('SWEEP', 'final check', 'match', 'Pass 2, last sweep. Any “)” still on the tape has no partner.',
     [rej(')', 'Unmatched “)”: no “(” opens this group.'),
       { on: BLANK, to: 'ACC', move: 'S', write: null, why: 'End of tape and nothing is left over: the string is a regular expression.', label: null }],
-    oth('SWEEP', 'Fine: keep sweeping right.'), [16.6, -3, 1]);
-  st('ACC', 'ACCEPT', 'accept', 'Halted: the string is a well-formed regular expression.', [], null, [20, -3, 0]);
-  st('REJ', 'REJECT', 'reject', 'Halted: the string is not a regular expression in this grammar.', [], null, [14.5, -9.8, -1]);
+    oth('SWEEP', 'Fine: keep sweeping right.'), [26, -5, 2]);
+  st('ACC', 'ACCEPT', 'accept', 'Halted: the string is a well-formed regular expression.', [], null, [31, -5, 0]);
+  st('REJ', 'REJECT', 'reject', 'Halted: the string is not a regular expression in this grammar.', [], null, [22, -14, -2]);
 
   // ---- compile the rule lists into δ ----
   function symLabel(on) {
@@ -723,7 +739,7 @@ var RTM = (function () {
     var halting = s.key === 'ACC' || s.key === 'REJ';
     function add(rule, isOther) {
       rule.from = s.id; rule.toId = byKey[rule.to].id; rule.isOther = !!isOther; rule.index = ruleCount++;
-      if (!rule.label) rule.label = isOther ? 'other' : symLabel(rule.on);
+      if (!rule.label) rule.label = isOther ? 'anything else' : symLabel(rule.on);
       rule.halts = rule.to === 'ACC' || rule.to === 'REJ';
       s.all.push(rule);
       var k = s.id + '>' + rule.toId, e = edgeIx[k];
@@ -745,7 +761,7 @@ var RTM = (function () {
     } else if (!halting) throw new Error('no default for ' + s.key);
   });
   edges.forEach(function (e) {
-    e.lines = e.rules.map(function (x) { return x.label + (x.write ? ' → ' + x.write : '') + (x.halts ? '' : ', ' + x.move); });
+    e.lines = e.rules.map(function (x) { return 'read ' + x.label + (x.write ? ' · write ' + x.write : '') + (x.halts ? ' · halt' : ' · move ' + x.move); });
   });
   var START = byKey.START.id, ACC = byKey.ACC.id, REJ = byKey.REJ.id;
 
@@ -1190,7 +1206,7 @@ RTM.selfTests = async function (api, log) {
     tip.append(h('div', null, h('b', { text: s.name }), h('span', { class: 't2', text: '  q' + s.id + ' · ' + ph.name })), h('div', { text: s.desc }));
     if (pinned && s.all.length) {
       const ul = h('div', { class: 't2', style: 'margin-top:5px' });
-      s.all.forEach(rule => ul.append(h('div', { text: rule.label + (rule.write ? ' → ' + rule.write : '') + (rule.halts ? '' : ', ' + rule.move) + '  ⇒ ' + M.states[rule.toId].name })));
+      s.all.forEach(rule => ul.append(h('div', { text: 'read ' + rule.label + (rule.write ? ' · write ' + rule.write : '') + (rule.halts ? '' : ' · move ' + rule.move) + '  ⇒  ' + M.states[rule.toId].name })));
       tip.append(ul);
     }
     tip.className = pinned ? 'pinned' : ''; tip.style.display = 'block';
@@ -1202,7 +1218,7 @@ RTM.selfTests = async function (api, log) {
 
   // ------------------------------------------------------------------ 3D view
   const view3d = (() => {
-    const V = { ok: false }, host = $('viewport'), R = 0.9;
+    const V = { ok: false }, host = $('viewport'), R = 1.15;
     let T, renderer, scene, camera, ray, canvas, sun, group = null, col = {}, nodes = [], eobj = [], particle, geo = {}, center, dragging = false, tmp, tmp2;
     const cam = { theta: -0.32, phi: 1.3, radius: 40, gRadius: 40, target: null, gTarget: null, fitted: true };
     V.cam = cam;
@@ -1261,9 +1277,9 @@ RTM.selfTests = async function (api, log) {
         let side = d.clone().cross(new T.Vector3(0, 0, 1)); if (side.lengthSq() < 0.05) side = d.clone().cross(new T.Vector3(1, 0, 0)); side.normalize();
         const p0 = a.clone().add(d.clone().multiplyScalar(0.75).addScaledVector(side, 0.66).normalize().multiplyScalar(R));
         const p3 = a.clone().add(d.clone().multiplyScalar(0.75).addScaledVector(side, -0.66).normalize().multiplyScalar(R + 0.34));
-        const c1 = a.clone().addScaledVector(d, 2.7).addScaledVector(side, 1.7), c2 = a.clone().addScaledVector(d, 2.7).addScaledVector(side, -1.7);
+        const c1 = a.clone().addScaledVector(d, 4.2).addScaledVector(side, 2.6), c2 = a.clone().addScaledVector(d, 4.2).addScaledVector(side, -2.6);
         const cv = new T.CubicBezierCurve3(p0, c1, c2, p3);
-        return { curve: cv, tip: p3, dir: cv.getTangent(1).normalize(), mid: cv.getPoint(0.5).addScaledVector(d, 0.35) };
+        return { curve: cv, tip: p3, dir: cv.getTangent(1).normalize(), mid: cv.getPoint(0.5).addScaledVector(d, 0.6) };
       }
       const d = b.clone().sub(a), len = d.length();
       let perp = d.clone().cross(new T.Vector3(0, 0, 1)); if (perp.length() < 0.25 * len) perp = d.clone().cross(new T.Vector3(0, 1, 0)); perp.normalize();
@@ -1274,7 +1290,7 @@ RTM.selfTests = async function (api, log) {
       for (let t = 1; t >= 0.5; t -= 0.01) { if (q.getPoint(t).distanceTo(b) >= R + 0.34) { t1 = t; break; } }
       const pts = []; for (let k = 0; k <= 14; k++) pts.push(q.getPoint(t0 + (t1 - t0) * k / 14));
       const cv = new T.CatmullRomCurve3(pts);
-      return { curve: cv, tip: pts[pts.length - 1], dir: q.getTangent(t1).normalize(), mid: q.getPoint(0.5) };
+      return { curve: cv, tip: pts[pts.length - 1], dir: q.getTangent(t1).normalize(), mid: q.getPoint(0.64) };
     }
     function disposeGroup() {
       if (!group) return;
@@ -1359,7 +1375,7 @@ RTM.selfTests = async function (api, log) {
         const d = camera.position.distanceTo(n.v);
         tmp.copy(camera.position).sub(n.v).normalize();
         n.sp.position.copy(n.v).addScaledVector(tmp, R * n.cs + 0.08);
-        const per = Math.max(R * 0.42 * n.cs, 11 * pxw * d), hh = per * n.la.k;
+        const per = Math.max(R * 0.42 * n.cs, (canvas.clientWidth < 520 ? 8.5 : 11) * pxw * d), hh = per * n.la.k;
         n.sp.scale.set(hh * n.la.aspect, hh, 1);
       });
       eobj.forEach(o => {
@@ -1377,8 +1393,8 @@ RTM.selfTests = async function (api, log) {
     function fitRadius() {
       const keepR = cam.radius, keepT = cam.target.clone();
       cam.target.copy(center);
-      const mx = canvas.clientWidth < 520 ? 0.8 : 0.86, my = 0.76;
-      let lo = 6, hi = 260;
+      const mx = canvas.clientWidth < 520 ? 0.78 : 0.84, my = 0.82;
+      let lo = 6, hi = 400;
       for (let it = 0; it < 22; it++) {
         cam.radius = (lo + hi) / 2; place();
         let ok = true;
@@ -1393,9 +1409,9 @@ RTM.selfTests = async function (api, log) {
       cam.gRadius = fitRadius(); cam.gTarget.copy(center); cam.fitted = true;
       if (snap) { cam.radius = cam.gRadius; cam.target.copy(center); }
     };
-    V.zoomBy = function (f) { cam.gRadius = clamp(cam.gRadius / f, 4, 260); cam.fitted = false; };
+    V.zoomBy = function (f) { cam.gRadius = clamp(cam.gRadius / f, 6, 400); cam.fitted = false; };
     V.setFollow = function (on) {
-      if (on) { cam.gRadius = Math.min(cam.gRadius, narrow() ? 22 : 19); cam.fitted = false; }
+      if (on) { cam.gRadius = Math.min(cam.gRadius, narrow() ? 34 : 30); cam.fitted = false; }
     };
     V.resize = function () {
       if (!V.ok) return;
@@ -1563,13 +1579,19 @@ RTM.selfTests = async function (api, log) {
   }
   function buildStatic() {
     const lg = $('legend');
-    Object.keys(M.PHASES).forEach(k => lg.append(h('li', null, h('i', { style: '--c: var(' + M.PHASES[k].css + ')' }), M.PHASES[k].short)));
+    lg.append(h('li', { class: 'cap', text: 'Arrow label: symbol read · symbol written (if any) · head move' }));
+    const guide = $('guide');
+    M.states.forEach(s => {
+      const b = h('button', { 'aria-label': 'Show state ' + s.name + ' in the graph' }, h('span', { class: 'dot', style: '--c: var(' + M.PHASES[s.phase].css + ')' }), h('b', { text: s.name }), h('span', { text: s.desc }));
+      b.addEventListener('click', () => { app.sel = app.sel === s.id ? -1 : s.id; hideTip(true); view3d.sync(); });
+      guide.append(h('li', null, b));
+    });
     const live = M.states.filter(s => s.all.length).length;
     const dl = $('tuple'), add = (a, b) => dl.append(h('dt', { text: a }), h('dd', { text: b }));
     add('Q', '{ ' + M.states.map(s => s.name).join(', ') + ' }  (' + M.states.length + ' states)');
     add('Σ', 'printable ASCII, 95 symbols');
     add('Γ', 'Σ ∪ { ' + M.BLANK + ', ' + M.SHIELD + ', ' + M.LM + ', ' + M.RM + ' }');
-    add('δ', M.ruleCount + ' rules over ' + live + ' working states; “other” stands for every symbol a state does not list');
+    add('δ', M.ruleCount + ' rules over ' + live + ' working states; “anything else” stands for every symbol a state does not list');
     add('q₀', 'START'); add('q_accept', 'ACCEPT'); add('q_reject', 'REJECT');
   }
 
