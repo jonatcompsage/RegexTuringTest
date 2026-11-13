@@ -1,9 +1,10 @@
-# Turing Machine Regex Simulator
+# Regex Validator Turing Machine
 
-A single-file, browser-only teaching tool: type a regular expression, watch it compile to a minimal DFA framed as a read-only Turing machine, and step a test string through it in 3D, 2D or as a transition table.
+A single-file, browser-only teaching tool: one fixed Turing machine whose language is the set of well-formed regular expressions. Write any string on the tape and the machine steps to ACCEPT or REJECT, with the reason. The 27-state graph is drawn in 3D.
 
 **Live:** https://jonatcompsage.github.io/RegexTuringTest/
 
-- Everything is in `index.html`; there is no build step. Open it from disk or host it anywhere.
-- The regex engine (parser, Thompson NFA, subset construction, minimization) is hand-written; the browser's `RegExp` is used only by the self-tests.
-- Press `?` in the app for keyboard shortcuts, the supported grammar and the built-in self-tests.
+- Everything is in `index.html`; there is no build step. Three.js is loaded from cdnjs for the 3D view; without it the Table view shows the same machine.
+- Pass 1 sweeps right and checks everything a finite memory can check. Pass 2 zigzags and pairs the parentheses by marking the tape, which is the part a finite automaton cannot do.
+- Press `?` in the app for the grammar, how to read the graph, and the built-in self-tests (the machine is compared with a separate recursive-descent recognizer).
+- `regex-to-machine.html` is the earlier simulator, which compiles one pattern into its own machine.
